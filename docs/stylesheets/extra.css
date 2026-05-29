@@ -211,3 +211,22 @@ html {
 [data-md-color-scheme="slate"] .md-typeset strong {
   color: #f0f0ff;
 }
+
+/* ── Side-by-side grid for admonitions ─────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid .admonition {
+  margin: 0;
+  height: 100%;
+}

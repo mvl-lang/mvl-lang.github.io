@@ -56,27 +56,31 @@ Every MVL program passes through **11 verification checks** before any code is e
 
 ---
 
-## :material-robot: Designed for AI generation
-
-MVL is not designed for humans to write — it's designed for LLMs to generate and compilers to verify. Verbose, explicit, zero ambiguity.
-
-**The LLM handles the syntax. The compiler handles the proof.**
-
-- **~10 statement forms.** ~5 expression forms. ~3 declaration forms.
-- **No lambdas, no macros, no inheritance, no exceptions, no null.**
-- **One way to do each thing.** Dropping features makes the language more powerful — every dropped ambiguity is a property the compiler can now verify.
-
----
-
 ## :material-security: Why MVL?
 
-Two forces converge:
+<div class="grid" markdown>
 
 !!! danger "Cybersecurity"
     AI-speed attacks need compile-time defenses. MVL makes entire vulnerability classes — injection, secret leakage, buffer overflow, privilege escalation — **structurally impossible**. Code that an attacker would exploit doesn't compile.
 
 !!! success "Safety"
     Mission-critical systems (avionics, industrial, automotive) require formal evidence. The MVL compiler generates that evidence automatically: every property proven at compile time is an **audit artifact**.
+
+</div>
+
+---
+
+## :material-robot: Designed for AI generation
+
+LLMs can generate code effortlessly. They have semantic understanding of intent, patterns, and contracts. So why are we still writing code optimized for *human* typing speed?
+
+**MVL flips the equation.** Annotations that are too tedious for a human developer — effect declarations, refinement predicates, ownership markers, information flow labels — are trivial for an LLM to generate. The code is verbose and explicit. The LLM doesn't mind. And every annotation it adds is a property the compiler can now *prove*.
+
+**The LLM handles the syntax. The compiler handles the proof.**
+
+- **~10 statement forms.** ~5 expression forms. ~3 declaration forms.
+- **No lambdas, no macros, no inheritance, no exceptions, no null.**
+- **One way to do each thing.** Dropping features makes the language more powerful — every dropped ambiguity is a property the compiler can now verify.
 
 ---
 
