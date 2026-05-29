@@ -1,0 +1,70 @@
+site_name: MVL — Maximum Verifiable Language
+site_url: https://mvl-lang.org
+site_description: The smallest language where the compiler verifies the most.
+site_author: LAB271
+
+repo_url: https://github.com/mvl-lang/mvl-lang.github.io
+repo_name: mvl-lang/mvl-lang.github.io
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Getting Started: getting-started.md
+  - Language:
+    - Overview: language/overview.md
+    - The 11 Requirements: language/requirements.md
+    - Design Principles: language/principles.md
+    - Examples: language/examples.md
+  - Docs:
+    - Language Reference: docs/reference.md
+    - Standard Library: docs/stdlib.md
+    - Assurance Report: docs/assurance.md
+  - Community:
+    - Contributing: community/contributing.md
+    - Roadmap: community/roadmap.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mvl-lang
+
+copyright: Copyright &copy; 2026 LAB271 — Apache 2.0
