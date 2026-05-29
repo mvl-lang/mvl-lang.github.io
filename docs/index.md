@@ -5,63 +5,35 @@ hide:
 
 # MVL — Maximum Verifiable Language
 
-<div style="text-align: center; margin: 2em 0;">
-<p style="font-size: 1.4em; color: #666;">What if your compiler proved your code correct — before running it?</p>
-</div>
+> *What if your compiler proved your code correct — before running it?*
 
 **MVL is a programming language where the compiler verifies 11 properties at compile time.** No null pointers. No buffer overflows. No data races. No unhandled errors. No secret leaks. If it compiles, it's correct.
 
-<div class="grid cards" markdown>
+---
 
--   :material-shield-check:{ .lg .middle } **11 Compile-Time Guarantees**
+## Install in 10 seconds
 
-    ---
+```bash
+curl -fsSL https://mvl-lang.org/install.sh | sh
+```
 
-    Type safety, memory safety, null elimination, error handling, ownership, effects, termination, data races, refinement types, information flow — all proven before a single line runs.
+## Hello, verified world
 
-    [:octicons-arrow-right-24: The 11 Requirements](language/requirements.md)
+```mvl
+fn main() ! Console {
+    println("Hello, verified world!")
+}
+```
 
--   :material-robot:{ .lg .middle } **Designed for AI Generation**
+```bash
+mvl run hello.mvl
+```
 
-    ---
+The `! Console` declares that this function has a console side effect. MVL tracks all effects in function signatures — nothing is hidden.
 
-    MVL is not designed for humans to write — it's designed for LLMs to generate and compilers to verify. Verbose, explicit, zero ambiguity. The LLM handles the syntax; the compiler handles the proof.
+---
 
-    [:octicons-arrow-right-24: Design Principles](language/principles.md)
-
--   :material-download:{ .lg .middle } **Install in 10 Seconds**
-
-    ---
-
-    ```bash
-    curl -fsSL https://mvl-lang.org/install.sh | sh
-    ```
-
-    [:octicons-arrow-right-24: Installation Guide](install.md)
-
--   :material-rocket-launch:{ .lg .middle } **Hello, Verified World**
-
-    ---
-
-    ```mvl
-    fn main() ! Console {
-        println("Hello, verified world!")
-    }
-    ```
-
-    [:octicons-arrow-right-24: Getting Started](getting-started.md)
-
-</div>
-
-## Why MVL?
-
-Two forces converge:
-
-- **Cybersecurity.** AI-speed attacks need compile-time defenses. MVL makes entire vulnerability classes — injection, secret leakage, buffer overflow, privilege escalation — structurally impossible.
-
-- **Safety.** Mission-critical systems (avionics, industrial, automotive) require formal evidence. MVL generates that evidence automatically at compile time.
-
-## The Compiler Proves It
+## What the compiler proves
 
 Every MVL program passes through 11 verification checks before any code is emitted:
 
@@ -81,7 +53,64 @@ Every MVL program passes through 11 verification checks before any code is emitt
 
 **Code that compiles is well-formed.** Tests handle validation — does it do the right thing?
 
-## Open Source
+---
+
+## Designed for AI generation
+
+MVL is not designed for humans to write — it's designed for LLMs to generate and compilers to verify. Verbose, explicit, zero ambiguity.
+
+The LLM handles the syntax. The compiler handles the proof.
+
+- **~10 statement forms.** ~5 expression forms. ~3 declaration forms.
+- **No lambdas, no macros, no inheritance, no exceptions, no null.**
+- **One way to do each thing.** Dropping features makes the language more powerful — every dropped ambiguity is a property the compiler can now verify.
+
+---
+
+## Why MVL?
+
+Two forces converge:
+
+**Cybersecurity.** AI-speed attacks need compile-time defenses. MVL makes entire vulnerability classes — injection, secret leakage, buffer overflow, privilege escalation — structurally impossible. Code that an attacker would exploit doesn't compile.
+
+**Safety.** Mission-critical systems (avionics, industrial, automotive) require formal evidence. The MVL compiler generates that evidence automatically: every property proven at compile time is an audit artifact.
+
+---
+
+## A taste of verification
+
+```mvl
+fn double(x: Int where x > 0) -> Int where self > 0 {
+    x * 2
+}
+
+fn main() ! Console {
+    let result: Int = double(5);   // compiler proves 5 > 0
+    println(result.to_string())
+}
+```
+
+Try breaking it:
+
+```mvl
+fn main() ! Console {
+    let result: Int = double(-1);  // compile error!
+}
+```
+
+```
+error[REQ10]: refinement violated
+  --> example.mvl:7:30
+   |
+7  |     let result: Int = double(-1);
+   |                              ^^ value -1 does not satisfy `x > 0`
+```
+
+The compiler **proves** it at compile time. No runtime check needed.
+
+---
+
+## Open source
 
 MVL is Apache-2.0 licensed. Built by [LAB271](https://github.com/LAB271).
 
