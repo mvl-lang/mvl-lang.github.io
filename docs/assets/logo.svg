@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="100 30 312 360" width="512" height="512">
+  <defs>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c4dff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#651fff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="eyeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd740;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff8f00;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="eyeGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Lynx face — geometric/minimal style -->
+  <!-- Head outline -->
+  <path d="M256 380 
+           C180 380 130 330 130 260 
+           C130 190 170 140 210 120 
+           L190 60 L220 110
+           C235 100 248 96 256 95
+           C264 96 277 100 292 110
+           L322 60 L302 120
+           C342 140 382 190 382 260
+           C382 330 332 380 256 380Z" 
+        fill="url(#purpleGrad)" opacity="0.9" filter="url(#glow)"/>
+  
+  <!-- Inner face (darker) -->
+  <path d="M256 365 
+           C190 365 150 320 150 260 
+           C150 200 185 160 220 140
+           L205 85 L228 125
+           C240 116 250 112 256 111
+           C262 112 272 116 284 125
+           L307 85 L292 140
+           C327 160 362 200 362 260
+           C362 320 322 365 256 365Z" 
+        fill="#1a1030" opacity="0.85"/>
+
+  <!-- Ear tufts (signature lynx feature) -->
+  <line x1="190" y1="60" x2="178" y2="38" stroke="#b388ff" stroke-width="4" stroke-linecap="round" filter="url(#glow)"/>
+  <line x1="190" y1="60" x2="195" y2="35" stroke="#b388ff" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+  <line x1="322" y1="60" x2="334" y2="38" stroke="#b388ff" stroke-width="4" stroke-linecap="round" filter="url(#glow)"/>
+  <line x1="322" y1="60" x2="317" y2="35" stroke="#b388ff" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Left eye -->
+  <ellipse cx="215" cy="240" rx="28" ry="24" fill="url(#eyeGrad)" filter="url(#eyeGlow)"/>
+  <ellipse cx="215" cy="240" rx="12" ry="18" fill="#0f0f1a"/>
+  <circle cx="210" cy="233" r="4" fill="white" opacity="0.8"/>
+
+  <!-- Right eye -->
+  <ellipse cx="297" cy="240" rx="28" ry="24" fill="url(#eyeGrad)" filter="url(#eyeGlow)"/>
+  <ellipse cx="297" cy="240" rx="12" ry="18" fill="#0f0f1a"/>
+  <circle cx="292" cy="233" r="4" fill="white" opacity="0.8"/>
+
+  <!-- Nose -->
+  <path d="M249 290 L256 300 L263 290 Z" fill="#b388ff" opacity="0.8"/>
+
+  <!-- Mouth lines -->
+  <path d="M256 300 C248 312 235 318 225 315" fill="none" stroke="#b388ff" stroke-width="2" opacity="0.5"/>
+  <path d="M256 300 C264 312 277 318 287 315" fill="none" stroke="#b388ff" stroke-width="2" opacity="0.5"/>
+
+  <!-- Whisker dots (cheek fur tufts — lynx signature) -->
+  <path d="M200 310 C170 320 155 310 140 315" fill="none" stroke="#b388ff" stroke-width="1.5" opacity="0.4"/>
+  <path d="M200 320 C170 328 155 325 135 330" fill="none" stroke="#b388ff" stroke-width="1.5" opacity="0.3"/>
+  <path d="M312 310 C342 320 357 310 372 315" fill="none" stroke="#b388ff" stroke-width="1.5" opacity="0.4"/>
+  <path d="M312 320 C342 328 357 325 377 330" fill="none" stroke="#b388ff" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Cheek fur (lynx mane) -->
+  <path d="M155 280 C145 300 145 330 160 355 C140 345 125 320 130 290 Z" fill="#7c4dff" opacity="0.3"/>
+  <path d="M357 280 C367 300 367 330 352 355 C372 345 387 320 382 290 Z" fill="#7c4dff" opacity="0.3"/>
+
+  <!-- Forehead mark — subtle V (verification) -->
+  <path d="M240 185 L256 205 L272 185" fill="none" stroke="#b388ff" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+
+</svg>

@@ -35,7 +35,7 @@ theme:
     code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
-    logo: material/shield-check
+    logo: assets/logo.svg
 
 nav:
   - Home: index.md
