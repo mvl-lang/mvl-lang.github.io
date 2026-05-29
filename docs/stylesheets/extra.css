@@ -1,0 +1,213 @@
+/* MVL — Dark-first, deep purple + amber accent
+   Inspired by the compiler's verification aesthetic:
+   dark backgrounds, sharp contrasts, confident color pops */
+
+:root {
+  /* Brand colors */
+  --mvl-purple: #7c4dff;
+  --mvl-purple-light: #b388ff;
+  --mvl-purple-dark: #651fff;
+  --mvl-amber: #ffd740;
+  --mvl-amber-light: #ffe57f;
+  --mvl-green: #69f0ae;
+  --mvl-red: #ff5252;
+  --mvl-surface: #1a1a2e;
+  --mvl-surface-light: #16213e;
+  --mvl-text: #e8e8e8;
+}
+
+/* ── Dark scheme (default) ─────────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--mvl-purple);
+  --md-primary-fg-color--light: var(--mvl-purple-light);
+  --md-primary-fg-color--dark: var(--mvl-purple-dark);
+  --md-accent-fg-color: var(--mvl-amber);
+  --md-default-bg-color: #0f0f1a;
+  --md-default-fg-color: var(--mvl-text);
+  --md-default-fg-color--light: #b0b0c0;
+  --md-code-bg-color: #1a1a2e;
+  --md-code-fg-color: #e0e0f0;
+  --md-typeset-a-color: var(--mvl-purple-light);
+}
+
+[data-md-color-scheme="slate"] .md-header {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1030 100%);
+  border-bottom: 1px solid rgba(124, 77, 255, 0.2);
+}
+
+[data-md-color-scheme="slate"] .md-tabs {
+  background: #0f0f1a;
+  border-bottom: 1px solid rgba(124, 77, 255, 0.1);
+}
+
+/* ── Light scheme ──────────────────────────────────────────────────── */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #5e35b1;
+  --md-primary-fg-color--light: #7c4dff;
+  --md-primary-fg-color--dark: #4527a0;
+  --md-accent-fg-color: #ff8f00;
+  --md-typeset-a-color: #5e35b1;
+}
+
+/* ── Hero section (landing page) ───────────────────────────────────── */
+
+.md-content .hero-tagline {
+  font-size: 1.5em;
+  font-weight: 300;
+  text-align: center;
+  margin: 1.5em 0;
+  opacity: 0.85;
+  letter-spacing: -0.01em;
+}
+
+[data-md-color-scheme="slate"] .md-content .hero-tagline {
+  background: linear-gradient(90deg, var(--mvl-purple-light), var(--mvl-amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Requirement table styling ─────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border: 1px solid rgba(124, 77, 255, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) thead {
+  background: linear-gradient(135deg, rgba(124, 77, 255, 0.15), rgba(101, 31, 255, 0.1));
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  color: var(--mvl-purple-light);
+  font-weight: 600;
+  border-bottom: 2px solid rgba(124, 77, 255, 0.3);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:nth-child(even) {
+  background: rgba(124, 77, 255, 0.04);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:hover {
+  background: rgba(124, 77, 255, 0.08);
+}
+
+/* ── Code blocks ───────────────────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background: rgba(124, 77, 255, 0.1);
+  color: var(--mvl-purple-light);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre {
+  border: 1px solid rgba(124, 77, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre code {
+  background: transparent;
+  color: #e0e0f0;
+  padding: 0;
+}
+
+/* ── Error output styling (compiler errors look like real terminal) ── */
+
+[data-md-color-scheme="slate"] .md-typeset pre:has(code:not([class])) {
+  background: #0d0d14;
+  border-color: rgba(255, 82, 82, 0.3);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+
+.md-typeset .md-button--primary {
+  background: linear-gradient(135deg, var(--mvl-purple) 0%, var(--mvl-purple-dark) 100%);
+  border: none;
+  border-radius: 6px;
+  padding: 0.7em 2em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(124, 77, 255, 0.3);
+}
+
+.md-typeset .md-button--primary:hover {
+  box-shadow: 0 6px 25px rgba(124, 77, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.md-typeset .md-button:not(.md-button--primary) {
+  border: 1px solid rgba(124, 77, 255, 0.4);
+  border-radius: 6px;
+  padding: 0.7em 2em;
+  transition: all 0.2s ease;
+}
+
+.md-typeset .md-button:not(.md-button--primary):hover {
+  border-color: var(--mvl-purple);
+  background: rgba(124, 77, 255, 0.1);
+}
+
+/* ── Admonitions ───────────────────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset .admonition {
+  border-radius: 8px;
+  border-left-width: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Horizontal rules — subtle purple glow ─────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 77, 255, 0.3), transparent);
+  margin: 3em 0;
+}
+
+/* ── Footer ────────────────────────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-footer {
+  background: #0a0a14;
+  border-top: 1px solid rgba(124, 77, 255, 0.1);
+}
+
+/* ── Blockquotes (hero tagline) ────────────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+  border-left: 3px solid var(--mvl-purple);
+  background: rgba(124, 77, 255, 0.05);
+  border-radius: 0 8px 8px 0;
+  padding: 1em 1.5em;
+  font-size: 1.15em;
+}
+
+/* ── Smooth scroll ─────────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Landing page specific ─────────────────────────────────────────── */
+
+.md-typeset h1 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  color: var(--mvl-purple-light);
+  border-bottom: 1px solid rgba(124, 77, 255, 0.15);
+  padding-bottom: 0.3em;
+}
+
+/* ── Verification checkmarks in text ───────────────────────────────── */
+
+[data-md-color-scheme="slate"] .md-typeset strong {
+  color: #f0f0ff;
+}

@@ -1,6 +1,7 @@
 ---
 hide:
   - navigation
+  - toc
 ---
 
 # MVL — Maximum Verifiable Language
@@ -11,13 +12,13 @@ hide:
 
 ---
 
-## Install in 10 seconds
+## :material-download: Install in 10 seconds
 
 ```bash
 curl -fsSL https://mvl-lang.org/install.sh | sh
 ```
 
-## Hello, verified world
+## :material-rocket-launch: Hello, verified world
 
 ```mvl
 fn main() ! Console {
@@ -33,9 +34,9 @@ The `! Console` declares that this function has a console side effect. MVL track
 
 ---
 
-## What the compiler proves
+## :material-shield-check: What the compiler proves
 
-Every MVL program passes through 11 verification checks before any code is emitted:
+Every MVL program passes through **11 verification checks** before any code is emitted:
 
 | # | What the compiler proves | What it prevents |
 |---|--------------------------|------------------|
@@ -55,11 +56,11 @@ Every MVL program passes through 11 verification checks before any code is emitt
 
 ---
 
-## Designed for AI generation
+## :material-robot: Designed for AI generation
 
 MVL is not designed for humans to write — it's designed for LLMs to generate and compilers to verify. Verbose, explicit, zero ambiguity.
 
-The LLM handles the syntax. The compiler handles the proof.
+**The LLM handles the syntax. The compiler handles the proof.**
 
 - **~10 statement forms.** ~5 expression forms. ~3 declaration forms.
 - **No lambdas, no macros, no inheritance, no exceptions, no null.**
@@ -67,17 +68,19 @@ The LLM handles the syntax. The compiler handles the proof.
 
 ---
 
-## Why MVL?
+## :material-security: Why MVL?
 
 Two forces converge:
 
-**Cybersecurity.** AI-speed attacks need compile-time defenses. MVL makes entire vulnerability classes — injection, secret leakage, buffer overflow, privilege escalation — structurally impossible. Code that an attacker would exploit doesn't compile.
+!!! danger "Cybersecurity"
+    AI-speed attacks need compile-time defenses. MVL makes entire vulnerability classes — injection, secret leakage, buffer overflow, privilege escalation — **structurally impossible**. Code that an attacker would exploit doesn't compile.
 
-**Safety.** Mission-critical systems (avionics, industrial, automotive) require formal evidence. The MVL compiler generates that evidence automatically: every property proven at compile time is an audit artifact.
+!!! success "Safety"
+    Mission-critical systems (avionics, industrial, automotive) require formal evidence. The MVL compiler generates that evidence automatically: every property proven at compile time is an **audit artifact**.
 
 ---
 
-## A taste of verification
+## :material-test-tube: A taste of verification
 
 ```mvl
 fn double(x: Int where x > 0) -> Int where self > 0 {
@@ -110,7 +113,7 @@ The compiler **proves** it at compile time. No runtime check needed.
 
 ---
 
-## Open source
+## :material-open-source-initiative: Open source
 
 MVL is Apache-2.0 licensed. Built by [LAB271](https://github.com/LAB271).
 

@@ -9,27 +9,33 @@ repo_name: mvl-lang/mvl-lang.github.io
 theme:
   name: material
   palette:
-    - scheme: default
-      primary: deep purple
-      accent: amber
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
     - scheme: slate
-      primary: deep purple
-      accent: amber
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
   features:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
     - navigation.expand
+    - navigation.top
     - content.code.copy
     - content.code.annotate
+    - header.autohide
+  font:
+    text: Inter
+    code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
+    logo: material/shield-check
 
 nav:
   - Home: index.md
@@ -51,16 +57,32 @@ nav:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - attr_list
   - md_in_html
   - tables
   - toc:
       permalink: true
+  - def_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   social:
