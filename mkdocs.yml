@@ -50,6 +50,7 @@ nav:
     - Language Reference: docs/reference.md
     - Standard Library: docs/stdlib.md
     - Assurance Report: docs/assurance.md
+  - The Lynx: lynx.md
   - Community:
     - Contributing: community/contributing.md
     - Roadmap: community/roadmap.md

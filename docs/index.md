@@ -4,6 +4,10 @@ hide:
   - toc
 ---
 
+<div style="text-align: center; margin: 2em 0;">
+  <img src="assets/logo.svg" alt="MVL Lynx" style="width: 200px; height: 200px;">
+</div>
+
 # MVL — Maximum Verifiable Language
 
 > *If your AI writes code without hesitation and your compiler guards the gate — why prove anything less than everything?*
