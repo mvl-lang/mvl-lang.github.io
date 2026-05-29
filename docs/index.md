@@ -6,7 +6,7 @@ hide:
 
 # MVL — Maximum Verifiable Language
 
-> *What if your compiler proved your code correct — before running it?*
+> *If your AI writes code without hesitation and your compiler guards the gate — why prove anything less than everything?*
 
 **MVL is a programming language where the compiler verifies 11 properties at compile time.** No null pointers. No buffer overflows. No data races. No unhandled errors. No secret leaks. If it compiles, it's correct.
 
