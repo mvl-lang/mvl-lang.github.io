@@ -33,9 +33,9 @@ theme:
   font:
     text: Inter
     code: JetBrains Mono
+  logo: assets/logo.svg
   icon:
     repo: fontawesome/brands/github
-    logo: assets/logo.svg
 
 nav:
   - Home: index.md
