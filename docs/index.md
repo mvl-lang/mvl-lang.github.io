@@ -83,7 +83,7 @@ LLMs can generate code effortlessly. They have semantic understanding of intent,
 **The LLM handles the syntax. The compiler handles the proof.**
 
 - **~10 statement forms.** ~5 expression forms. ~3 declaration forms.
-- **No lambdas, no macros, no inheritance, no exceptions, no null.**
+- **No macros, no inheritance, no exceptions, no null.**
 - **One way to do each thing.** Dropping features makes the language more powerful — every dropped ambiguity is a property the compiler can now verify.
 
 ---
