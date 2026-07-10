@@ -303,8 +303,48 @@ The compiler verifies: all error paths handled, effects declared, no null, no hi
 
 ---
 
+## Example Programs in the Repository
+
+Two sets of runnable example programs live in the MVL GitHub organisation.
+
+### [`mvl-lang/mvl` — stdlib-only examples](https://github.com/mvl-lang/mvl/tree/main/examples)
+
+These examples use only the standard library — no external packages required. Run any of them with `mvl run examples/<name>/main.mvl`.
+
+| Example | What it shows |
+|---------|--------------|
+| [`access_control`](https://github.com/mvl-lang/mvl/tree/main/examples/access_control) | RBAC decision logic — type-safe roles and permissions |
+| [`actor_pingpong`](https://github.com/mvl-lang/mvl/tree/main/examples/actor_pingpong) | Two actors exchanging messages — actor model basics |
+| [`actor_trading`](https://github.com/mvl-lang/mvl/tree/main/examples/actor_trading) | Order book matching engine — actors with shared domain state |
+| [`bzip`](https://github.com/mvl-lang/mvl/tree/main/examples/bzip) | Bitstream packing — low-level byte manipulation with refinements |
+| [`config_server`](https://github.com/mvl-lang/mvl/tree/main/examples/config_server) | Layered configuration — defaults → TOML → env → CLI |
+| [`csv_transactions`](https://github.com/mvl-lang/mvl/tree/main/examples/csv_transactions) | CSV parsing with `std.csv` — IFC-aware file I/O |
+| [`flight_clearance`](https://github.com/mvl-lang/mvl/tree/main/examples/flight_clearance) | Safety-critical dispatch — exhaustive match over clearance states |
+| [`hipaa_healthcare`](https://github.com/mvl-lang/mvl/tree/main/examples/hipaa_healthcare) | HIPAA-style data labeling — `Secret` types in database operations |
+| [`log_analyzer`](https://github.com/mvl-lang/mvl/tree/main/examples/log_analyzer) | Log severity classification — total functions over structured input |
+| [`log_to_file`](https://github.com/mvl-lang/mvl/tree/main/examples/log_to_file) | Structured logging to file — `std.log` + `std.io` |
+| [`medical_triage`](https://github.com/mvl-lang/mvl/tree/main/examples/medical_triage) | Emergency triage scoring — refinements on medical priority types |
+| [`pci_payment`](https://github.com/mvl-lang/mvl/tree/main/examples/pci_payment) | PCI-DSS card processing — `Secret` labels on card data, relabel audit trail |
+| [`snake_game`](https://github.com/mvl-lang/mvl/tree/main/examples/snake_game) | Snake game logic — actors, refinements on board coordinates |
+| [`task_pipeline`](https://github.com/mvl-lang/mvl/tree/main/examples/task_pipeline) | Pipeline with error propagation — `Result` chaining across stages |
+
+### [`mvl-lang/examples` — package-based examples](https://github.com/mvl-lang/examples)
+
+These examples use extension packages (`pkg.*`). Run `mvl install` in the example directory first, then `mvl run main.mvl`.
+
+| Example | Packages used | What it shows |
+|---------|--------------|--------------|
+| [`crud_api`](https://github.com/mvl-lang/examples/tree/main/crud_api) | `pkg-http`, `pkg-rest`, `pkg-sqlite`, `pkg-health`, `pkg-metrics`, `pkg-trace` | Full REST API — routing, SQLite CRUD, K8s health, Prometheus metrics, distributed tracing |
+| [`actor_webserver`](https://github.com/mvl-lang/examples/tree/main/actor_webserver) | `pkg-http` | Actor-per-request HTTP server — concurrency model for production traffic |
+| [`sqlite_basic`](https://github.com/mvl-lang/examples/tree/main/sqlite_basic) | `pkg-sqlite` | SQLite open, schema init, insert, query — database basics |
+| [`zmq_hello`](https://github.com/mvl-lang/examples/tree/main/zmq_hello) | `pkg-zmq` | ZMTP 3.x PUSH/PULL and PUB/SUB — zero-dependency messaging |
+| [`snake_game`](https://github.com/mvl-lang/examples/tree/main/snake_game) | `pkg-tui` | Snake with a terminal UI — raw mode, ANSI rendering, keyboard input |
+| [`anthropic_chat`](https://github.com/mvl-lang/examples/tree/main/anthropic_chat) | `pkg-anthropic` | Claude Messages API client — `Secret[String]` API keys, IFC-safe chat |
+
+---
+
 ## Next Steps
 
 - [Language Reference](../docs/reference.md) — full syntax specification
+- [Extension Packages](../docs/packages.md) — all available `pkg.*` packages
 - [Getting Started](../getting-started.md) — run your first program
-- [Build Assurance](../why/build-assurance.md) — what the assurance report contains

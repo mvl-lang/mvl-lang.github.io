@@ -329,34 +329,9 @@ Embeds build-time metadata into the binary: version, MVL version, dependency lis
 
 ---
 
-## Packages (`pkg.*`)
-
-Extended functionality is provided as packages, installed via `mvl install` from `mvl.toml`. Packages are verified with `mvl check`; their public APIs satisfy all 11 requirements.
-
-| Package | What it provides |
-|---------|-----------------|
-| `pkg.http` | HTTP server, request/response parsing, routing |
-| `pkg.rest` | REST JSON helpers — `json_ok`, `json_error`, `param_int`, `body_obj` |
-| `pkg.sqlite` | SQLite database — `open`, `execute`, `query`, `query_scalar` |
-| `pkg.health` | K8s health check — `HealthReport`, `health_to_response` |
-| `pkg.metrics` | Prometheus metrics — `Metrics`, `counter_inc`, `start_prometheus_exporter` |
-| `pkg.trace` | Distributed tracing — `Tracer`, `span_start`, `span_end`, `TraceContext` |
-
-Declare dependencies in `mvl.toml`:
-
-```toml
-[dependencies]
-pkg-http    = { git = "https://github.com/mvl-lang/pkg-http",    tag = "v1.2.0" }
-pkg-sqlite  = { git = "https://github.com/mvl-lang/pkg-sqlite",  tag = "v0.2.3" }
-pkg-metrics = { git = "https://github.com/mvl-lang/pkg-metrics", tag = "v0.3.0" }
-```
-
-Then install: `mvl install`
-
----
-
 ## See Also
 
+- [Extension Packages](packages.md) — `pkg.*` packages with GitHub links
 - [Language Reference](reference.md) — type system and syntax
 - [Assurance Report](assurance.md) — how to verify stdlib and package coverage
 - [Build Assurance](../why/build-assurance.md) — supply chain, SBOM, and license validation
