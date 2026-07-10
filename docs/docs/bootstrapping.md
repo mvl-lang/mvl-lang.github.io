@@ -159,7 +159,7 @@ graph TD
     B --> D
     C --> D
     D["Phase 3 ✅<br/>Parser<br/>Lexer + recursive descent"]
-    D --> E["Phase 4<br/>Checker<br/>Type checker + 11 passes"]
+    D --> E["Phase 4 🔄<br/>Checker<br/>Type checker + 11 passes"]
     E --> F["Phase 6<br/>Bootstrap<br/>3-stage self-verify"]
 ```
 
@@ -171,7 +171,7 @@ graph TD
 | 3 | Parser — Lexer + recursive descent | ✅ Done |
 | A | MVL-hosted LLVM emitter (`compiler/backends/llvm/`) | ✅ Done |
 | 2 | Leaf stages — Resolver, Mono, TIR Lower | 🔄 In progress |
-| 4 | Checker — type checker + 11 requirement passes | ⬜ Planned |
+| 4 | Checker — type checker + 11 requirement passes (solver in progress) | 🔄 In progress |
 | 6 | Three-stage bootstrap verify | ⬜ Planned |
 
 ### Three-stage verification (Phase 6)
