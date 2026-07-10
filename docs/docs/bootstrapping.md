@@ -132,7 +132,17 @@ This feeds every `tests/corpus/` file through `compiler/main.mvl` and fails if a
 ## Stage 2 — Build the Self-Hosted Compiler
 
 !!! warning "Not yet available"
-    `mvl build compiler/main.mvl` is blocked until the backend stubs (`emit_stmts`, `emit_exprs`, `emit_match`) and expression lowering in `tir_lower.mvl` are complete. See the phase table below.
+    `mvl build compiler/main.mvl` currently fails with Rust compilation errors in the
+    MVL compiler's own source (`src/tir.rs`), unrelated to the self-hosted code.
+
+    The LLVM emitter itself (`compiler/backends/llvm/`) is fully implemented and usable
+    today via the TIR pipeline:
+
+    ```bash
+    mvl tir foo.mvl | mvl run compiler/backends/llvm/emitter.mvl > foo.ll
+    ```
+
+    Full `mvl build` support for the self-hosted frontend is tracked in the phase table below.
 
 ---
 
@@ -145,7 +155,7 @@ graph TD
     A["Phase 1 ✅<br/>Shared types<br/>compiler/tir.mvl"] --> B
     A --> C
     B["Phase 2 🔄<br/>Leaf stages<br/>Resolver · Mono · TIR Lower"]
-    C["Phase A 🔄<br/>Backends<br/>MVL-hosted LLVM + Rust emitters"]
+    C["Phase A ✅<br/>Backends<br/>MVL-hosted LLVM emitter"]
     B --> D
     C --> D
     D["Phase 3 ✅<br/>Parser<br/>Lexer + recursive descent"]
@@ -159,8 +169,8 @@ graph TD
 |-------|-------|--------|
 | 1 | Shared types (`compiler/tir.mvl`) | ✅ Done |
 | 3 | Parser — Lexer + recursive descent | ✅ Done |
+| A | MVL-hosted LLVM emitter (`compiler/backends/llvm/`) | ✅ Done |
 | 2 | Leaf stages — Resolver, Mono, TIR Lower | 🔄 In progress |
-| A | MVL-hosted backends (LLVM + Rust emitters) | 🔄 In progress |
 | 4 | Checker — type checker + 11 requirement passes | ⬜ Planned |
 | 6 | Three-stage bootstrap verify | ⬜ Planned |
 
