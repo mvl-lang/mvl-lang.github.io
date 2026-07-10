@@ -57,6 +57,7 @@ nav:
     - Extension Packages: docs/packages.md
     - Assurance Report: docs/assurance.md
     - Bootstrapping: docs/bootstrapping.md
+    - Self-Hosted Hello World: docs/self-hosted-hello.md
   - The Lynx: lynx.md
   - Community:
     - Contributing: community/contributing.md

@@ -169,7 +169,7 @@ graph TD
 |-------|-------|--------|
 | 1 | Shared types (`compiler/tir.mvl`) | ✅ Done |
 | 3 | Parser — Lexer + recursive descent | ✅ Done |
-| A | MVL-hosted LLVM emitter (`compiler/backends/llvm/`) | ✅ Done |
+| A | MVL-hosted LLVM emitter (`compiler/backends/llvm/`) — [hello world e2e](self-hosted-hello.md) | ✅ Done |
 | 2 | Leaf stages — Resolver, Mono, TIR Lower | 🔄 In progress |
 | 4 | Checker — type checker + 11 requirement passes (solver in progress) | 🔄 In progress |
 | 6 | Three-stage bootstrap verify | ⬜ Planned |
