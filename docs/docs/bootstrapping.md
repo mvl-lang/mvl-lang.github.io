@@ -82,22 +82,30 @@ The self-hosted compiler lives in `compiler/`. Use the Stage 0 binary to check i
 mvl check compiler/
 ```
 
-Expected output:
+Expected output (scores reflect current proof coverage — not yet 11/11 everywhere):
 
 ```
-compiler/lexer.mvl:          OK  (11/11 requirements proven)
-compiler/parser.mvl:         OK  (11/11 requirements proven)
-compiler/tir.mvl:            OK  (11/11 requirements proven)
-compiler/verify_types.mvl:   OK  (11/11 requirements proven)
-compiler/verify_passes.mvl:  OK  (11/11 requirements proven)
-compiler/verify_errors.mvl:  OK  (11/11 requirements proven)
-compiler/resolver.mvl:       OK  (11/11 requirements proven)
-compiler/mono.mvl:           OK  (11/11 requirements proven)
-compiler/tir_lower.mvl:      OK  (11/11 requirements proven)
-compiler/main.mvl:           OK  (11/11 requirements proven)
+compiler/backends/llvm/emit_context.mvl: OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_exprs.mvl:   OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_helpers.mvl: OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_match.mvl:   OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_program.mvl: OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_stmts.mvl:   OK  (9/11 requirements proven)
+compiler/backends/llvm/emit_types.mvl:   OK  (9/11 requirements proven)
+compiler/backends/llvm/emitter.mvl:      OK  (9/11 requirements proven)
+compiler/context.mvl:                    OK  (9/11 requirements proven)
+compiler/effects.mvl:                    OK  (9/11 requirements proven)
+compiler/lexer.mvl:                      OK  (9/11 requirements proven)
+compiler/main.mvl:                       OK  (10/11 requirements proven)
+compiler/mono.mvl:                       OK  (9/11 requirements proven)
+compiler/parser.mvl:                     OK  (9/11 requirements proven)
+compiler/resolver.mvl:                   OK  (9/11 requirements proven)
+compiler/tir.mvl:                        OK  (8/11 requirements proven)
+compiler/tir_lower.mvl:                  OK  (9/11 requirements proven)
+compiler/verify_errors.mvl:              OK  (8/11 requirements proven)
+compiler/verify_passes.mvl:              OK  (9/11 requirements proven)
+compiler/verify_types.mvl:               OK  (9/11 requirements proven)
 ```
-
-The compiler's own source passes all 11 requirements — the compiler verifies itself.
 
 To see the full assurance report:
 
@@ -111,17 +119,20 @@ To run the MVL-in-MVL test suite:
 make test-mvl
 ```
 
+To run the self-hosted lex+parse pipeline over the full corpus (bootstrap smoke test):
+
+```bash
+make test-bootstrap
+```
+
+This feeds every `tests/corpus/` file through `compiler/main.mvl` and fails if any produce parse errors.
+
 ---
 
 ## Stage 2 — Build the Self-Hosted Compiler
 
-Once Stage 1 passes, build the self-hosted binary:
-
-```bash
-mvl build compiler/main.mvl
-```
-
-This transpiles the MVL source to Rust, then compiles it with `cargo`. The result is a second `mvl` binary produced entirely from MVL source.
+!!! warning "Not yet available"
+    `mvl build compiler/main.mvl` is blocked until the backend stubs (`emit_stmts`, `emit_exprs`, `emit_match`) and expression lowering in `tir_lower.mvl` are complete. See the phase table below.
 
 ---
 
@@ -133,11 +144,11 @@ The full self-hosting plan is split into six phases ([ADR-0044](https://github.c
 graph TD
     A["Phase 1 ✅<br/>Shared types<br/>compiler/tir.mvl"] --> B
     A --> C
-    B["Phase 2<br/>Leaf stages<br/>Resolver · Mono · TIR Lower"]
-    C["Phase A<br/>Backends<br/>MVL-hosted LLVM + Rust emitters"]
+    B["Phase 2 🔄<br/>Leaf stages<br/>Resolver · Mono · TIR Lower"]
+    C["Phase A 🔄<br/>Backends<br/>MVL-hosted LLVM + Rust emitters"]
     B --> D
     C --> D
-    D["Phase 3<br/>Parser<br/>Lexer + recursive descent"]
+    D["Phase 3 ✅<br/>Parser<br/>Lexer + recursive descent"]
     D --> E["Phase 4<br/>Checker<br/>Type checker + 11 passes"]
     E --> F["Phase 6<br/>Bootstrap<br/>3-stage self-verify"]
 ```
@@ -147,9 +158,9 @@ graph TD
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | Shared types (`compiler/tir.mvl`) | ✅ Done |
+| 3 | Parser — Lexer + recursive descent | ✅ Done |
 | 2 | Leaf stages — Resolver, Mono, TIR Lower | 🔄 In progress |
 | A | MVL-hosted backends (LLVM + Rust emitters) | 🔄 In progress |
-| 3 | Parser — Lexer + recursive descent | ⬜ Planned |
 | 4 | Checker — type checker + 11 requirement passes | ⬜ Planned |
 | 6 | Three-stage bootstrap verify | ⬜ Planned |
 
@@ -184,9 +195,7 @@ export PATH="$PWD/target/release:$PATH"
 mvl check compiler/
 mvl assurance compiler/ --verbose
 make test-mvl
-
-# Stage 2: build the self-hosted binary
-mvl build compiler/main.mvl
+make test-bootstrap   # lex+parse corpus through the self-hosted frontend
 ```
 
 ---
