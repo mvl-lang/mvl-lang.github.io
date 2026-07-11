@@ -6,33 +6,40 @@
 curl -fsSL https://mvl-lang.org/install.sh | sh
 ```
 
-This installs the `mvl` binary to `~/.mvl/bin/` and adds it to your PATH.
+This:
 
-## Manual Install
+1. Installs Rust if not present (via [rustup](https://rustup.rs/))
+2. Clones and builds MVL from source
+3. Installs the `mvl` binary to `~/.local/bin/`
+4. Adds `~/.local/bin` to your PATH
 
-Download the latest release for your platform from [GitHub Releases](https://github.com/mvl-lang/mvl/releases):
+No sudo required.
 
-| Platform | Architecture | Download |
-|----------|-------------|----------|
-| macOS | Apple Silicon (M1/M2/M3) | `mvl-aarch64-apple-darwin.tar.gz` |
-| macOS | Intel | `mvl-x86_64-apple-darwin.tar.gz` |
-| Linux | x86_64 | `mvl-x86_64-unknown-linux-gnu.tar.gz` |
+## Environment Variables
 
-Extract and add to PATH:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MVL_INSTALL_DIR` | `~/.local/bin` | Where to install the binary |
+| `MVL_VERSION` | `latest` | Version/tag to build (e.g., `v0.197.1`) |
+| `MVL_BUILD_DIR` | `~/.mvl/src` | Where to clone source |
+| `MVL_NO_MODIFY_PATH` | `0` | Set to `1` to skip PATH modification |
+
+Example: install a specific version to a custom location:
 
 ```bash
-tar xzf mvl-*.tar.gz
-sudo mv mvl /usr/local/bin/
+MVL_VERSION=v0.197.1 MVL_INSTALL_DIR=/opt/mvl/bin \
+  curl -fsSL https://mvl-lang.org/install.sh | sh
 ```
 
-## From Source
+## Manual Build
 
-Requires [Rust](https://rustup.rs/) (stable toolchain):
+Requires [Rust](https://rustup.rs/) (stable toolchain) and git:
 
 ```bash
 git clone https://github.com/mvl-lang/mvl.git
 cd mvl
-make build
+cargo build --release
+cp target/release/mvl ~/.local/bin/
 ```
 
 ## Verify Installation

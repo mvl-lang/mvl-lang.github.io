@@ -4,27 +4,22 @@
 # Usage:
 #   curl -fsSL https://mvl-lang.org/install.sh | sh
 #
-# Verification:
-#   curl -fsSL https://mvl-lang.org/install.sh -o install.sh
-#   curl -fsSL https://mvl-lang.org/install.sh.sha256 -o install.sh.sha256
-#   sha256sum -c install.sh.sha256
-#   sh install.sh
-#
 # Environment variables:
-#   MVL_INSTALL_DIR   — install location (default: ~/.mvl/bin)
-#   MVL_VERSION       — version to install (default: latest)
+#   MVL_INSTALL_DIR    — install location (default: ~/.local/bin)
+#   MVL_VERSION        — version/tag to build (default: latest release)
 #   MVL_NO_MODIFY_PATH — set to 1 to skip PATH modification
 #
 # This script:
 #   1. Detects your OS and architecture
-#   2. Downloads the MVL binary from GitHub Releases
-#   3. Verifies the SHA-256 checksum
-#   4. Installs to ~/.mvl/bin/
-#   5. Adds to PATH (with your permission)
+#   2. Checks for Rust toolchain (installs if missing)
+#   3. Clones/updates the MVL repository
+#   4. Builds from source with cargo
+#   5. Installs to ~/.local/bin/mvl
+#   6. Adds to PATH (with your permission)
 #
 # Supported platforms:
 #   - macOS (Apple Silicon, Intel)
-#   - Linux (x86_64)
+#   - Linux (x86_64, aarch64)
 #
 # License: Apache-2.0
 
@@ -33,8 +28,9 @@ set -eu
 # ── Constants ──────────────────────────────────────────────────────────
 
 MVL_REPO="mvl-lang/mvl"
-MVL_INSTALL_DIR="${MVL_INSTALL_DIR:-$HOME/.mvl/bin}"
+MVL_INSTALL_DIR="${MVL_INSTALL_DIR:-$HOME/.local/bin}"
 MVL_VERSION="${MVL_VERSION:-latest}"
+MVL_BUILD_DIR="${MVL_BUILD_DIR:-$HOME/.mvl/src}"
 
 # ── Colors (only if terminal) ─────────────────────────────────────────
 
@@ -81,6 +77,125 @@ detect_platform() {
   TARGET="${ARCH}-${OS}"
 }
 
+# ── Check prerequisites ────────────────────────────────────────────────
+
+check_rust() {
+  if command -v cargo >/dev/null 2>&1; then
+    ok "Rust toolchain found: $(rustc --version 2>/dev/null || echo 'unknown')"
+    return 0
+  fi
+  return 1
+}
+
+install_rust() {
+  info "Rust toolchain not found. Installing via rustup..."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+  # shellcheck source=/dev/null
+  . "$HOME/.cargo/env"
+  ok "Rust installed"
+}
+
+check_git() {
+  if command -v git >/dev/null 2>&1; then
+    return 0
+  fi
+  abort "git is required but not found. Please install git first."
+}
+
+# ── Clone or update repo ───────────────────────────────────────────────
+
+fetch_source() {
+  mkdir -p "$(dirname "$MVL_BUILD_DIR")"
+
+  if [ -d "$MVL_BUILD_DIR/.git" ]; then
+    info "Updating MVL source..."
+    cd "$MVL_BUILD_DIR"
+    git fetch --tags --quiet
+  else
+    info "Cloning MVL repository..."
+    rm -rf "$MVL_BUILD_DIR"
+    git clone --quiet "https://github.com/${MVL_REPO}.git" "$MVL_BUILD_DIR"
+    cd "$MVL_BUILD_DIR"
+  fi
+
+  # Checkout specific version or latest release
+  if [ "$MVL_VERSION" = "latest" ]; then
+    # Get the latest release tag
+    LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    if [ -n "$LATEST_TAG" ]; then
+      git checkout --quiet "$LATEST_TAG"
+      ok "Using release: $LATEST_TAG"
+    else
+      git checkout --quiet main
+      ok "Using branch: main (no releases found)"
+    fi
+  else
+    git checkout --quiet "$MVL_VERSION"
+    ok "Using version: $MVL_VERSION"
+  fi
+}
+
+# ── Build ──────────────────────────────────────────────────────────────
+
+build_mvl() {
+  info "Building MVL (this may take a few minutes)..."
+  cd "$MVL_BUILD_DIR"
+
+  # Ensure cargo is in PATH (in case we just installed Rust)
+  if [ -f "$HOME/.cargo/env" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.cargo/env"
+  fi
+
+  cargo build --release --quiet 2>/dev/null || cargo build --release
+  ok "Build complete"
+}
+
+# ── Install ────────────────────────────────────────────────────────────
+
+install_binary() {
+  mkdir -p "$MVL_INSTALL_DIR"
+  cp "$MVL_BUILD_DIR/target/release/mvl" "$MVL_INSTALL_DIR/mvl"
+  chmod +x "$MVL_INSTALL_DIR/mvl"
+  ok "Installed to $MVL_INSTALL_DIR/mvl"
+}
+
+# ── PATH setup ─────────────────────────────────────────────────────────
+
+setup_path() {
+  if [ "${MVL_NO_MODIFY_PATH:-0}" = "1" ]; then
+    return
+  fi
+
+  # Check if already in PATH
+  case ":$PATH:" in
+    *":$MVL_INSTALL_DIR:"*) return ;;
+  esac
+
+  SHELL_NAME="$(basename "${SHELL:-sh}")"
+  case "$SHELL_NAME" in
+    bash) RC="$HOME/.bashrc" ;;
+    zsh)  RC="$HOME/.zshrc" ;;
+    fish) RC="$HOME/.config/fish/config.fish" ;;
+    *)    RC="" ;;
+  esac
+
+  if [ -n "$RC" ] && [ -f "$RC" ]; then
+    if ! grep -q "$MVL_INSTALL_DIR" "$RC" 2>/dev/null; then
+      if [ "$SHELL_NAME" = "fish" ]; then
+        printf '\n# MVL\nfish_add_path %s\n' "$MVL_INSTALL_DIR" >> "$RC"
+      else
+        printf '\n# MVL\nexport PATH="%s:$PATH"\n' "$MVL_INSTALL_DIR" >> "$RC"
+      fi
+      ok "Added $MVL_INSTALL_DIR to PATH in $RC"
+      info "Run 'source $RC' or restart your shell"
+    fi
+  else
+    info "Add this to your shell config:"
+    printf "    export PATH=\"%s:\$PATH\"\n" "$MVL_INSTALL_DIR"
+  fi
+}
+
 # ── Main ───────────────────────────────────────────────────────────────
 
 main() {
@@ -91,90 +206,37 @@ main() {
 
   detect_platform
   info "Detected platform: ${TARGET}"
-
-  # ── Coming soon ────────────────────────────────────────────────────
-
-  printf "\n"
-  printf "${PURPLE}${BOLD}  Coming soon.${RESET}\n"
-  printf "\n"
-  info "Binary releases are not yet available."
-  info "To build from source:"
-  printf "\n"
-  printf "    git clone https://github.com/mvl-lang/mvl.git\n"
-  printf "    cd mvl\n"
-  printf "    cargo build --release\n"
-  printf "    sudo cp target/release/mvl /usr/local/bin/\n"
-  printf "\n"
-  info "Follow progress: https://github.com/mvl-lang/mvl/releases"
   printf "\n"
 
-  # ── Below is the full installer, activated when releases exist ─────
-  # Uncomment when GitHub Releases are live:
-  #
-  # if [ "$MVL_VERSION" = "latest" ]; then
-  #   MVL_VERSION=$(curl -fsSL "https://api.github.com/repos/${MVL_REPO}/releases/latest" \
-  #     | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
-  #   [ -n "$MVL_VERSION" ] || abort "Failed to determine latest version"
-  # fi
-  #
-  # ARCHIVE="mvl-${TARGET}.tar.gz"
-  # URL="https://github.com/${MVL_REPO}/releases/download/v${MVL_VERSION}/${ARCHIVE}"
-  # CHECKSUM_URL="${URL}.sha256"
-  #
-  # info "Downloading MVL v${MVL_VERSION} for ${TARGET}..."
-  #
-  # TMPDIR=$(mktemp -d)
-  # trap 'rm -rf "$TMPDIR"' EXIT
-  #
-  # curl -fsSL "$URL" -o "${TMPDIR}/${ARCHIVE}" \
-  #   || abort "Download failed. Check https://github.com/${MVL_REPO}/releases"
-  # ok "Downloaded ${ARCHIVE}"
-  #
-  # # Verify checksum
-  # curl -fsSL "$CHECKSUM_URL" -o "${TMPDIR}/${ARCHIVE}.sha256" \
-  #   || abort "Checksum download failed"
-  # cd "$TMPDIR"
-  # if command -v sha256sum >/dev/null 2>&1; then
-  #   sha256sum -c "${ARCHIVE}.sha256" --quiet \
-  #     || abort "Checksum verification FAILED — download may be corrupted or tampered with"
-  # elif command -v shasum >/dev/null 2>&1; then
-  #   shasum -a 256 -c "${ARCHIVE}.sha256" --quiet \
-  #     || abort "Checksum verification FAILED — download may be corrupted or tampered with"
-  # else
-  #   err "Neither sha256sum nor shasum found — skipping checksum verification"
-  # fi
-  # ok "Checksum verified"
-  #
-  # # Extract and install
-  # tar xzf "${ARCHIVE}"
-  # mkdir -p "${MVL_INSTALL_DIR}"
-  # mv mvl "${MVL_INSTALL_DIR}/mvl"
-  # chmod +x "${MVL_INSTALL_DIR}/mvl"
-  # ok "Installed to ${MVL_INSTALL_DIR}/mvl"
-  #
-  # # Add to PATH
-  # if [ "${MVL_NO_MODIFY_PATH:-0}" != "1" ]; then
-  #   SHELL_NAME="$(basename "$SHELL")"
-  #   case "$SHELL_NAME" in
-  #     bash) RC="$HOME/.bashrc" ;;
-  #     zsh)  RC="$HOME/.zshrc" ;;
-  #     fish) RC="$HOME/.config/fish/config.fish" ;;
-  #     *)    RC="" ;;
-  #   esac
-  #
-  #   if [ -n "$RC" ] && ! grep -q ".mvl/bin" "$RC" 2>/dev/null; then
-  #     printf '\n# MVL\nexport PATH="$HOME/.mvl/bin:$PATH"\n' >> "$RC"
-  #     ok "Added ~/.mvl/bin to PATH in ${RC}"
-  #     info "Run 'source ${RC}' or restart your shell"
-  #   fi
-  # fi
-  #
-  # printf "\n"
-  # ok "MVL v${MVL_VERSION} installed successfully!"
-  # printf "\n"
-  # info "Run 'mvl --version' to verify"
-  # info "Run 'mvl help' to get started"
-  # printf "\n"
+  # Check and install prerequisites
+  check_git
+  check_rust || install_rust
+
+  printf "\n"
+
+  # Fetch source code
+  fetch_source
+
+  printf "\n"
+
+  # Build from source
+  build_mvl
+
+  printf "\n"
+
+  # Install binary
+  install_binary
+
+  # Setup PATH
+  setup_path
+
+  printf "\n"
+  VERSION=$("$MVL_INSTALL_DIR/mvl" --version 2>/dev/null || echo "unknown")
+  ok "MVL installed successfully! ($VERSION)"
+  printf "\n"
+  info "Run 'mvl --version' to verify"
+  info "Run 'mvl help' to get started"
+  printf "\n"
 }
 
 main "$@"
