@@ -25,13 +25,13 @@ curl -fsSL https://mvl-lang.org/install.sh | sh
 ## :material-rocket-launch: Hello, verified world
 
 ```mvl
-fn main() ! Console {
-    println("Hello, verified world!")
+fn main() -> Unit ! Console {
+    println("Hello, world!");
 }
 ```
 
 ```bash
-mvl run hello.mvl
+cd examples && mvl run hello_world.mvl
 ```
 
 The `! Console` declares that this function has a console side effect. MVL tracks all effects in function signatures — nothing is hidden.
