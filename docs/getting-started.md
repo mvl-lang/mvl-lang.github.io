@@ -5,7 +5,7 @@
 Create `hello.mvl`:
 
 ```mvl
-fn main() ! Console {
+fn main() -> Unit ! Console {
     println("Hello, verified world!")
 }
 ```
@@ -28,7 +28,7 @@ fn double(x: Int where x > 0) -> Int where self > 0 {
     x * 2
 }
 
-fn main() ! Console {
+fn main() -> Unit ! Console {
     let result: Int = double(5);
     println(result.to_string())
 }
@@ -50,7 +50,7 @@ The compiler **proves** at compile time that:
 Try breaking it:
 
 ```mvl
-fn main() ! Console {
+fn main() -> Unit ! Console {
     let result: Int = double(-1);  // ← compile error!
 }
 ```

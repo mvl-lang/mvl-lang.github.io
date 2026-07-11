@@ -95,7 +95,7 @@ fn double(x: Int where x > 0) -> Int where self > 0 {
     x * 2
 }
 
-fn main() ! Console {
+fn main() -> Unit ! Console {
     let result: Int = double(5);   // compiler proves 5 > 0
     println(result.to_string())
 }
@@ -104,7 +104,7 @@ fn main() ! Console {
 Try breaking it:
 
 ```mvl
-fn main() ! Console {
+fn main() -> Unit ! Console {
     let result: Int = double(-1);  // compile error!
 }
 ```
