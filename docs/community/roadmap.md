@@ -91,13 +91,13 @@ The MVL compiler, rewritten in MVL. The compiler verifies its own source — MVL
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | Shared types (`compiler/tir.mvl`) | ✅ Done |
-| 3 | Lexer + recursive descent parser | ✅ Done |
-| A | MVL-hosted LLVM and Rust emitters | ✅ Done |
-| 2 | Resolver, monomorphizer, TIR lowering | 🔄 In progress |
-| 4 | Type checker + 11-requirement passes + solver | 🔄 In progress |
-| 6 | Three-stage bootstrap verify | ⬜ Planned |
+| 2 | Lexer + recursive descent parser | ✅ Done |
+| 3 | Resolver, monomorphizer, TIR lowering (`resolver.mvl`, `mono.mvl`, `tir_lower.mvl`) | ✅ Passes `mvl check` |
+| 4 | Type checker + 11-requirement passes + solver (`checker.mvl`, `infer.mvl`, `verify_*.mvl`, `solver.mvl`) | ✅ Passes `mvl check` |
+| 5 | MVL-hosted LLVM and Rust emitters | ✅ Done |
+| 6 | Three-stage bootstrap verify — `mvl₀` (Rust) → `mvl₁` (MVL) → `mvl₂` (MVL), assert byte-identical | 🔄 In progress |
 
-When complete, the bootstrap will run three stages: the Rust compiler produces `mvl₁`, `mvl₁` compiles the MVL source to produce `mvl₂`, and `mvl₁ == mvl₂` byte-for-byte. Divergence indicates a bug in the self-hosted compiler.
+The MVL-in-MVL compiler has 32 modules and passes `mvl check` end-to-end. The remaining work is closing the bootstrap: producing a runnable `mvl₁` binary that recompiles its own source into a byte-identical `mvl₂`.
 
 See [Bootstrapping](../docs/bootstrapping.md) for the full build instructions.
 
