@@ -53,27 +53,26 @@ The resulting language is verbose and heavily annotated. That is intentional. LL
 
 ---
 
-## 3. Seven-phase compilation
+## 3. Nine-phase roadmap
 
 *(ADR-0003)*
 
-MVL reaches a fully verified, self-sufficient binary in seven phases:
+MVL reaches a fully verified, self-sufficient binary in nine phases:
 
 | Phase | Identity | Status |
 |-------|----------|--------|
-| 1 | **It compiles** — MVL → Rust transpilation | ✅ Done |
-| 2 | **It's useful** — Rust FFI ecosystem, real programs | ✅ Done |
-| 3 | **It's verified** — All 11 requirements enforced at compile time | ✅ Done |
-| 4 | **It's complete** — Full stdlib in pure MVL; actors + Tokio; packages | ✅ Done |
-| 5 | **It's native** — Direct LLVM IR backend (no `rustc` in the trust chain) | 🔄 Phase 5A done |
-| 6 | **It's trustworthy** — Formal proofs, SMT solver, model checker | ⬜ Planned |
-| 7 | **It's self-sufficient** — Self-hosting, certification pipeline | 🔄 In progress |
+| 1–4 | **Foundation** — MVL verifies its 11 requirements at compile time | ✅ Done |
+| 5 | **Compiles** — Full compilation chain (LLVM backend, no host compiler dependency) | ✅ Done |
+| 6 | **Works** — Real programs run, stdlib complete, testing matures | 🔴 In progress |
+| 7 | **Ships** — Package registry, signing, SBOM, LSP, assurance pipeline | ⬜ Future |
+| 8 | **Proves** — Actor runtime, session types, model checker | ⬜ Future |
+| 9 | **Proven** — Formal metatheory in Lean 4 / Coq | ⬜ Future |
 
-Phases 1–4 are complete and production-ready. Phase 5A delivered the first end-to-end pipeline: the self-hosted MVL LLVM emitter produces a working binary from `hello_world.mvl` without `rustc` ever touching the program's semantics ([see the tracer bullet](../docs/self-hosted-hello.md)).
+Phases 1–5 are complete. The LLVM backend shipped (v0.60–v0.68), eliminating `rustc` from the trust chain — the CompCert principle: one compiler, one proof chain.
 
-Phase 5 (LLVM) eliminates `rustc` from the trust chain — the CompCert principle: one compiler, one proof chain. Two compilers that agree on output is not the same as one compiler that is correct.
+Phase 6 is in progress: the self-hosted compiler (`compiler/`) is written in MVL and passes `mvl check`. Stdlib modules are gaining real implementations. The three-stage bootstrap verify (Rust `mvl₀` → MVL `mvl₁` → MVL `mvl₂`, assert byte-identical) is the self-hosting completion criterion.
 
-Phase 7 is in progress in parallel with Phase 5: the self-hosted compiler (`compiler/`) is already written in MVL and passes `mvl check`. The three-stage bootstrap verify (Rust `mvl₀` → MVL `mvl₁` → MVL `mvl₂`, assert byte-identical) is the Phase 7 completion criterion.
+See the [roadmap](https://github.com/mvl-lang/mvl/blob/main/docs/roadmap.md) for detailed status per component.
 
 ---
 
