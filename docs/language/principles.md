@@ -57,22 +57,24 @@ The resulting language is verbose and heavily annotated. That is intentional. LL
 
 *(ADR-0003)*
 
-MVL reaches a fully verified, self-sufficient binary in nine phases:
+MVL reaches a fully verified, self-sufficient language in nine phases (spec 012):
 
-| Phase | Identity | Status |
-|-------|----------|--------|
-| 1–4 | **Foundation** — MVL verifies its 11 requirements at compile time | ✅ Done |
-| 5 | **Compiles** — Full compilation chain (LLVM backend, no host compiler dependency) | ✅ Done |
-| 6 | **Works** — Real programs run, stdlib complete, testing matures | 🔴 In progress |
-| 7 | **Ships** — Package registry, signing, SBOM, LSP, assurance pipeline | ⬜ Future |
-| 8 | **Proves** — Actor runtime, session types, model checker | ⬜ Future |
-| 9 | **Proven** — Formal metatheory in Lean 4 / Coq | ⬜ Future |
+| Phase | Identity | Pillar delivered | Status |
+|-------|----------|------------------|--------|
+| 1–4 | **Foundation** — 11 requirements enforced at compile time | Requirements, Constructs | ✅ Done |
+| 5 | **Compiles** — Full compilation chain (LLVM backend, no host compiler) | Backends | ✅ Done |
+| 6 | **Works** — Real programs run, stdlib complete, testing matures | Stdlib, Testing | ✅ Done |
+| 7 | **Self-hosting** — The compiler compiles itself | Constructs (complete), Toolchain | 🔄 In progress |
+| 8 | **Proves** — Actors, session types, model checker | Verification (applied) | 🔄 In progress |
+| 9 | **Proven** — Lean/Coq metatheory + package supply chain | Packaging, Verification (formal) | ⬜ Future |
 
-Phases 1–5 are complete. The LLVM backend shipped (v0.60–v0.68), eliminating `rustc` from the trust chain — the CompCert principle: one compiler, one proof chain.
+Phases 1–6 are complete. The LLVM backend shipped (v0.60–v0.68), eliminating `rustc` from the trust chain — the CompCert principle: one compiler, one proof chain. The stdlib has 30 modules with real implementations; the packaging module ships SBOM, audit, and dependency resolution.
 
-Phase 6 is in progress: the self-hosted compiler (`compiler/`) is written in MVL and passes `mvl check`. Stdlib modules are gaining real implementations. The three-stage bootstrap verify (Rust `mvl₀` → MVL `mvl₁` → MVL `mvl₂`, assert byte-identical) is the self-hosting completion criterion.
+Phase 7 (self-hosting) is in progress: the MVL-in-MVL compiler (`compiler/`) has 35 modules and passes `mvl check`. The three-stage bootstrap verify (Rust `mvl₀` → MVL `mvl₁` → MVL `mvl₂`, assert byte-identical) is the completion criterion.
 
-See the [roadmap](https://github.com/mvl-lang/mvl/blob/main/docs/roadmap.md) for detailed status per component.
+Phase 8 (proves) is in progress in parallel: actor syntax and runtime foundations exist (spec 015), session types spec (016) drafted, model checker planned.
+
+See [spec 012](https://github.com/mvl-lang/mvl/blob/main/.openspec/specs/012-phases/spec.md) for the authoritative pillar/phase model.
 
 ---
 
