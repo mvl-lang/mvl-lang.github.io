@@ -1,88 +1,51 @@
 # Design Principles
 
-MVL is built on a small number of explicit decisions. Each one is documented in an Architectural Decision Record (ADR) in the repository. This page summarises the most foundational ones.
+MVL has nine design principles across two tiers.
+
+- **Tier 1 — Meta principles** are the *why*. Cross-cutting philosophy that guides every decision. Every ADR in the corpus checks its proposal against these.
+- **Tier 2 — Structural decisions** are the *what*. Concrete structural choices those principles produced. Each has its own anchor ADR.
+
+Language-level choices like *total by default*, *immutable by default*, *effects in signatures*, *security labels*, *refinement types*, and *actors instead of threads* are **not** listed here as separate principles. They follow from Tier 1 combined with the eleven requirements (#6) — restating them would be redundant. See the "What's not on this list" section below for where they live.
 
 ---
 
-## 1. Eleven requirements — no more, no less
+## Tier 1 — Meta principles
 
-*(ADR-0001)*
+### 1. Explicit over implicit
 
-The eleven requirements are not arbitrary. Each one was chosen because:
+No hidden control flow, no implicit conversions, no silent coercion. Every relevant property lives in the signature or the source.
 
-1. It catches a class of bugs that no combination of the other ten catches.
-2. It can be verified at compile time with acceptable annotation cost.
-3. It does not overlap with another requirement.
+Consequences: no default arguments, no operator overloading, no implicit numeric conversion, no ambient effects, no inference on `let` bindings, no bare `unwrap()`.
 
-A twelfth requirement was considered (formal deadlock freedom for actors). It failed criterion 2: the annotation burden in practice is too high relative to the benefit. The eleven that remain each clear all three bars.
+**Cited as:** "DP 1" / "Principle 1" across ADR-0017, ADR-0022, ADR-0024, ADR-0025, ADR-0026.
 
-The requirements are split into two groups:
+### 2. One syntax per concept
 
-**Classical (1–6):** Rooted in 40 years of formal methods and safety-critical practice (MISRA C, DO-178C, IEC 61508, SPARK Ada). These became mainstream through Rust. MVL inherits them.
+Each concept has exactly one expression. One loop, one branch, one error mechanism, one form of mutation. Regularity beats variety — the LLM benefits from a single pattern, the compiler benefits from fewer cases.
 
-**Modern (7–11):** Effect tracking, termination, data race freedom, refinement types, and information flow control were all theoretically available before MVL. They were impractical because the annotation burden fell on human developers. With LLMs writing the code, the burden evaporates — the LLM writes the annotations, the compiler verifies them. MVL is the first language designed assuming LLM authorship as the normal case.
-
----
-
-## 2. Language contraction
-
-*(ADR-0002)*
-
-MVL was built by subtraction. Every feature that exists for writability rather than verifiability was removed.
-
-**Features deliberately excluded:**
-
-| Feature | Why removed |
+| Concept | The one way |
 |---------|-------------|
-| Mutable closures | Prevent capturing `ref` variables; eliminates a class of aliasing bugs |
-| Implicit conversions | Every type boundary is explicit |
-| Operator overloading | One meaning per operator; no surprise semantics |
-| Default arguments | All parameters are explicit; no hidden state |
-| Variadic arguments | Static arities only; prevents unverifiable call sites |
-| Macros | No code generation outside the compiler; the compiler IS the macro system |
-| String interpolation | Use `.concat()` — explicit and verifiable |
-| Exceptions | `Result[T, E]` only — errors are values, never invisible |
-| Null | `Option[T]` only — the "billion dollar mistake" is a compile error |
-| `break` / `continue` | Loop control flow is explicit via `return` and `while true` |
-| Inheritance | Composition only; no implicit method resolution order |
-| Dynamic dispatch | Static dispatch only; call targets are always known at compile time |
-| Global mutable state | All state lives in actor fields or explicit `ref` bindings |
-| Anonymous tuples | Named structs only — no `(Int, String)` type syntax |
+| Fallible computation | `Result[T, E]` with `?` propagation |
+| Optional value | `Option[T]` with `Some(v)` / `None` |
+| Mutable binding | `let x: ref T = ...` |
+| Side effect | `! EffectName` in signature |
+| Error handling | `match` or `?` — never `try/catch` |
+| Iteration | `for x in collection` (total) or `while condition` (partial) |
+| Generics | `fn name[T](...)` with square brackets |
 
-The resulting language is verbose and heavily annotated. That is intentional. LLMs write it, the compiler verifies it. A human reading the code gets maximum information from the signature alone.
+**Anchors:** ADR-0002, ADR-0004, ADR-0005.
 
----
+### 3. Vocabulary over syntax
 
-## 3. Nine-phase roadmap
+Grow the stdlib, not the grammar. Compression comes from named, typed, verifiable functions the compiler understands — never from sugar it can't see through. The boundary between language and stdlib moves in one direction only: **stdlib grows, language doesn't.**
 
-*(ADR-0003)*
+Consequences: no macros, no string interpolation, no list comprehensions. `format()` and `Map.get()` exist instead.
 
-MVL reaches a fully verified, self-sufficient language in nine phases (spec 012):
+**Anchors:** ADR-0002 (compression model), `.openspec/language.md`.
 
-| Phase | Identity | Pillar delivered | Status |
-|-------|----------|------------------|--------|
-| 1–4 | **Foundation** — 11 requirements enforced at compile time | Requirements, Constructs | ✅ Done |
-| 5 | **Compiles** — Full compilation chain (LLVM backend, no host compiler) | Backends | ✅ Done |
-| 6 | **Works** — Real programs run, stdlib complete, testing matures | Stdlib, Testing | ✅ Done |
-| 7 | **Self-hosting** — The compiler compiles itself | Constructs (complete), Toolchain | 🔄 In progress |
-| 8 | **Proves** — Actors, session types, model checker | Verification (applied) | 🔄 In progress |
-| 9 | **Proven** — Lean/Coq metatheory + package supply chain | Packaging, Verification (formal) | ⬜ Future |
+### 4. The signature IS the threat model
 
-Phases 1–6 are complete. The LLVM backend shipped (v0.60–v0.68), eliminating `rustc` from the trust chain — the CompCert principle: one compiler, one proof chain. The stdlib has 30 modules with real implementations; the packaging module ships SBOM, audit, and dependency resolution.
-
-Phase 7 (self-hosting) is in progress: the MVL-in-MVL compiler (`compiler/`) has 35 modules and passes `mvl check`. The three-stage bootstrap verify (Rust `mvl₀` → MVL `mvl₁` → MVL `mvl₂`, assert byte-identical) is the completion criterion.
-
-Phase 8 (proves) is in progress in parallel: actor syntax and runtime foundations exist (spec 015), session types spec (016) drafted, model checker planned.
-
-See [spec 012](https://github.com/mvl-lang/mvl/blob/main/.openspec/specs/012-phases/spec.md) for the authoritative pillar/phase model.
-
----
-
-## 4. The signature is the threat model
-
-*(ADR-0001, ADR-0004)*
-
-A function signature in MVL is a complete security contract:
+Effects, IFC labels, ownership, refinements, termination, errors — all visible in the type signature. Reading a signature reveals the whole contract; nothing is ambient.
 
 ```mvl
 pub partial fn transfer(
@@ -92,87 +55,136 @@ pub partial fn transfer(
 ) -> Result[Unit, TransferError] ! DB + Audit  // Effects: database + audit trail
 ```
 
-Reading the signature tells you:
+Reading the signature tells you what data is sensitive, what values are valid, what I/O the function performs, what can go wrong, and whether it terminates. The compiler enforces every claim.
 
-- What data is sensitive (`Secret[String]`)
-- What values are valid (`where self > 0`)
-- What I/O this function does (`! DB + Audit`)
-- What can go wrong (`Result[Unit, TransferError]`)
-- Whether it terminates (`partial` — may not)
+**Anchors:** ADR-0001, ADR-0004.
 
-This is not optional documentation. The compiler enforces every claim. A function that logs a `Secret` value without declassification is a compile error, not a code review finding.
+### 5. Honest over silent
 
----
+The compiler must either verify a property or reject the program. Never silently drop, accept, or defer. Post-Postel: parsers may accept multiple syntactic forms; validators must reject invalid input, never coerce it.
 
-## 5. One syntax per concept
+Consequences: no lossy default conversions, no silent label drops at stdlib boundaries, no fallback error handling that hides failure. Explicit `declassify` / `sanitize` for label transitions.
 
-*(ADR-0002, ADR-0005)*
-
-Every concept in MVL has exactly one way to express it:
-
-| Concept | The one way |
-|---------|------------|
-| Fallible computation | `Result[T, E]` with `?` propagation |
-| Optional value | `Option[T]` with `Some(v)` / `None` |
-| Mutable binding | `let x: ref T = ...` |
-| Side effect | `! EffectName` in signature |
-| Error handling | `match` or `?` — never `try/catch` |
-| Iteration | `for x in collection` (total) or `while condition` (partial) |
-| Generics | `fn name[T](...)` with square brackets |
-| Loop invariant | `invariant predicate` inside `while` |
-
-When there is one way to do something, the compiler can reason about it. When there are three ways, the compiler must handle all three and developers must learn all three. MVL chooses the former.
+**Anchors:** ADR-0024 (label-transparent functions), ADR-0026 (input validation philosophy).
 
 ---
 
-## 6. LL(1) grammar by design
+## Tier 2 — Structural decisions
+
+### 6. Eleven requirements — no more, no less
+
+*(ADR-0001)*
+
+The compiler verifies exactly eleven properties:
+
+1. Type safety (ADTs)
+2. Memory safety
+3. Totality (exhaustive match)
+4. Null elimination (Option)
+5. Error visibility (Result)
+6. Ownership (linearity)
+7. Effect tracking
+8. Termination checking
+9. Data race freedom
+10. Refinement types
+11. Information flow control
+
+Each was chosen because it catches bugs no combination of the other ten catches, can be verified at compile time with acceptable annotation cost, and does not overlap with another requirement. A twelfth requirement (formal deadlock freedom for actors) was considered and rejected on annotation-cost grounds.
+
+**Classical (1–6):** Rooted in 40 years of formal methods and safety-critical practice (MISRA C, DO-178C, IEC 61508, SPARK Ada). Became mainstream through Rust. MVL inherits them.
+
+**Modern (7–11):** Effect tracking, termination, data race freedom, refinement types, and information flow control were theoretically available before MVL but impractical because the annotation burden fell on human developers. With LLMs writing the code, the burden evaporates.
+
+**Instantiates:** #1 (each requirement makes a property explicit in the type), #4 (the requirements *are* the threat model), #5 (each requirement is verified or the program is rejected).
+
+### 7. Language contraction
+
+*(ADR-0002)*
+
+MVL was built by subtraction. Every feature that exists for writability rather than verifiability was removed.
+
+| Feature | Why removed |
+|---------|-------------|
+| Mutable closures | Prevent capturing `ref` variables; eliminates a class of aliasing bugs |
+| List comprehensions | Use `list.map(f).filter(g)` chains |
+| Decorators | Use explicit wrapper functions |
+| Implicit conversions | Every type boundary is explicit |
+| Operator overloading | One meaning per operator; no surprise semantics |
+| Default arguments | All parameters are explicit; no hidden state |
+| Variadic arguments | Static arities only; prevents unverifiable call sites |
+| Macros | No code generation outside the compiler |
+| Ternary operator | Use `if expr { a } else { b }` |
+| String interpolation | Use `.concat()` — explicit and verifiable |
+| Exceptions | `Result[T, E]` only — errors are values, never invisible |
+| Null | `Option[T]` only |
+| Mutable-by-default bindings | Immutable default, `ref` opts in |
+| Global mutable state | All state lives in actor fields or explicit `ref` bindings |
+| `break` / `continue` | Loop control flow is explicit via `return` and `while true` |
+| Inheritance | Composition only |
+| Dynamic dispatch | Static dispatch only; call targets are always known at compile time |
+| Anonymous tuples | Named structs only |
+
+Anonymous lambdas with **immutable captures** are supported (`|x| x + 1`) — they power higher-order stdlib functions (`map`, `filter`, `fold`). Only *mutable* closures are banned.
+
+Result: ~10 statement forms, ~5 expression forms, ~3 declaration forms.
+
+**Instantiates:** #2 (removes multiple ways to express one concept), #3 (moves capabilities into the stdlib rather than the grammar).
+
+### 8. LL(1) grammar, hand-written recursive descent
 
 *(ADR-0005)*
 
-The parser is a hand-written recursive descent parser with a strictly LL(1) grammar. Every ambiguity that could require lookahead beyond one token was eliminated by language design:
+Grammar fits in ~100 EBNF productions, LL(1), no lookahead beyond one token. Hand-written parser — no parser generator, no macros, no PEG.
+
+Every ambiguity that could require lookahead beyond one token was eliminated by language design:
 
 - Generic type arguments use `[T]` not `<T>` (because `name<` requires multi-token lookahead to distinguish comparison from generic application)
 - `if` is always an expression, never only a statement
 - `match` arms always end with `,`
 - `pub` is factored out front so each declaration starts with a distinct keyword
 
-The LL(1) grammar fits in ≈100 productions. A developer can hold the entire grammar in working memory. The compiler is ~76 K lines of Rust — small enough to audit, and in the process of being ported to MVL so the compiler verifies itself.
+**Instantiates:** #2 at the grammar level — LL(1) means every construct has one unambiguous parse.
+
+### 9. Ownership, not GC
+
+*(ADR-0029)*
+
+Memory safety via linearity and reference capabilities (`val`, `ref`, `iso`, `tag`) adapted from Pony. No garbage collector, no tracing runtime. Deterministic deallocation, suitable for real-time and safety-critical use.
+
+**Instantiates:** Req 6 in #6 (ownership is one of the eleven), #4 (lifetime is in the type, not hidden in a runtime).
 
 ---
 
-## 7. No bare unwrap
+## At a glance
 
-A consequence of Requirements 4 and 5: there is no `.unwrap()` method on `Option` or `Result`. Extracting a value from a container always requires explicit handling:
+| # | Principle                                    | Tier       | Anchor ADR |
+|---|----------------------------------------------|------------|------------|
+| 1 | Explicit over implicit                       | Meta       | 0017 / 0026 |
+| 2 | One syntax per concept                       | Meta       | 0002 / 0004 |
+| 3 | Vocabulary over syntax                       | Meta       | 0002       |
+| 4 | The signature IS the threat model            | Meta       | 0001 / 0004 |
+| 5 | Honest over silent                           | Meta       | 0024 / 0026 |
+| 6 | Eleven requirements — no more, no less       | Structural | 0001       |
+| 7 | Language contraction                         | Structural | 0002       |
+| 8 | LL(1) grammar, hand-written recursive descent | Structural | 0005       |
+| 9 | Ownership, not GC                            | Structural | 0029       |
 
-```mvl
-// CORRECT — be explicit about the missing case
-let val: Int = match opt {
-    Some(v) => v,
-    None    => 0,
-};
+## What's not on this list
 
-// CORRECT — propagate the error
-let val: Int = opt.unwrap_or(0);
+The following are **outputs** of the principles above, not principles themselves. They are captured in specs and ADRs:
 
-// WRONG — does not compile; unwrap() does not exist
-let val: Int = opt.unwrap();
-```
+| Choice                          | Captured in                                 |
+|---------------------------------|---------------------------------------------|
+| Total by default                | Spec 013, Req 8                              |
+| Immutable by default (`ref`)    | Spec 001, Req 6                              |
+| Effects in signatures           | Spec 002, Req 7, ADR-0035                    |
+| Security labels on all data     | Spec 003, Req 11, ADR-0017 / 0024 / 0036     |
+| Refinement types inline         | Spec 018, Req 10, ADR-0025                   |
+| Actors, not threads             | Spec 015, Req 9, ADR-0029 / 0037             |
+| No bare `unwrap()`              | Stdlib policy, follows from #1               |
+| The `ref` keyword, not `mut`    | Spec 001, follows from #1 and Req 6          |
 
-The absence of `unwrap()` is not a convenience removal. It closes the escape hatch that makes Requirements 4 and 5 optional in practice.
-
----
-
-## 8. The `ref` keyword, not `mut`
-
-Mutable bindings in MVL use `ref`, not `mut`:
-
-```mvl
-let x: Int = 42;        // immutable
-let y: ref Int = 0;     // mutable — can be reassigned
-y = y + 1;
-```
-
-`ref` is deliberate vocabulary: it signals that this binding participates in the ownership and aliasing analysis (Requirement 2 and 6). `mut` in Rust carries the same semantic weight but appears at the wrong grammatical position (`let mut x`) and is inconsistently applied to function parameters. MVL uses `ref` at the type level consistently.
+If you find yourself proposing a new "principle" that is really one of these, capture it in the relevant spec/ADR instead. The principles page stays small on purpose.
 
 ---
 
