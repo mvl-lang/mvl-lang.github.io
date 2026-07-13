@@ -8,11 +8,27 @@ This page is the credits reel. Each entry names what MVL took and what it left b
 
 ## Foundations of Proving
 
-The mathematical and contract-programming roots that made compile-time verification possible are documented separately.
+Before there were programming languages, there was the logic that programming languages would eventually verify. These are the mathematical roots.
 
-**See:** [The Proving Lineage](proving-lineage.md) — Curry–Howard, Hoare, Martin-Löf, Girard, Eiffel, Ada/SPARK, Dafny, Liquid Haskell, F\*, Idris, Lean/Coq, CompCert/seL4.
+### Curry–Howard correspondence (1934 / 1969)
 
-The short version: MVL's ability to prove eleven properties at compile time inherits sixty years of theoretical and practical work. Nothing in the verification layer of MVL is new. What is new is the LLM-authorship model that pays the collected annotation debt.
+Types are propositions; programs are proofs. If a function `fn double(x: Int) -> Int` type-checks, it is a constructive proof that from every integer, an integer can be produced. MVL's eleven requirements are all instances of this idea: every property enforced by the type system is a proposition the compiler has proven about the code.
+
+### Hoare logic (1969)
+
+`{P} C {Q}` — if precondition `P` holds and command `C` executes, postcondition `Q` will hold. This is the formal parent of every `requires` / `ensures` clause. MVL's function contracts (ADR-0025) are Hoare triples with LLM-generated predicates and compiler-discharged proofs.
+
+### Martin-Löf type theory (1972 / 1984)
+
+Intuitionistic type theory made refinement types and dependent types mathematically respectable. MVL doesn't ship full dependent types (they resist decidable checking), but its refinement types — `Int where x > 0` — descend directly from this line.
+
+### Linear logic (Girard, 1987)
+
+Every resource used exactly once. This is the theoretical parent of Rust's borrow checker and MVL's ownership discipline (Requirement 6). Without linear logic, there is no principled reason to reject double-free or use-after-move.
+
+### Design by Contract — Eiffel (Meyer, 1988)
+
+Contracts as first-class program elements, not comments. Bertrand Meyer coined `require` / `ensure` / `invariant` — the exact keywords MVL uses (ADR-0025). Eiffel enforced contracts at runtime; MVL enforces them at compile time via the solver. The idiom, the vocabulary, and the culture ("the specification is part of the program") are Meyer's.
 
 ---
 
