@@ -1,6 +1,6 @@
 # Language Reference
 
-Complete reference for MVL syntax and type system. The grammar is LL(1) with ≈100 productions — see [`docs/grammar.ebnf`](https://github.com/mvl-lang/mvl/blob/main/docs/grammar.ebnf) in the repository for the formal specification.
+Complete reference for MVL syntax and type system. The grammar is LL(1) with ≈100 productions — see the [Formal Grammar (EBNF)](../language/grammar.md) page for the full specification, or [`docs/grammar.ebnf`](https://github.com/mvl-lang/mvl/blob/main/docs/grammar.ebnf) in the compiler repo.
 
 ---
 
@@ -444,6 +444,6 @@ One file = one module. Directories group modules. No `mod` declarations — the 
 
 ## See Also
 
-- [`docs/grammar.ebnf`](https://github.com/mvl-lang/mvl/blob/main/docs/grammar.ebnf) — formal EBNF grammar
+- [Formal Grammar (EBNF)](../language/grammar.md) — the LL(1) grammar in full
 - [Standard Library](stdlib.md) — available modules and functions
 - [Design Principles](../language/principles.md) — why the language is shaped this way

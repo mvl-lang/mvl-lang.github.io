@@ -51,6 +51,7 @@ nav:
     - Overview: language/overview.md
     - Design Principles: language/principles.md
     - Inspirations: language/inspirations.md
+    - Grammar (EBNF): language/grammar.md
     - Examples: language/examples.md
   - Docs:
     - Language Reference: docs/reference.md
