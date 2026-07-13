@@ -50,6 +50,8 @@ nav:
   - Language:
     - Overview: language/overview.md
     - Design Principles: language/principles.md
+    - Inspirations: language/inspirations.md
+    - The Proving Lineage: language/proving-lineage.md
     - Examples: language/examples.md
   - Docs:
     - Language Reference: docs/reference.md
