@@ -1,7 +1,7 @@
 # The Lynx
 
 <div style="text-align: center; margin: 2em 0;">
-  <img src="assets/logo.svg" alt="MVL Lynx" style="width: 240px; height: 240px;">
+  <img src="../assets/logo.svg" alt="MVL Lynx" style="width: 240px; height: 240px;">
 </div>
 
 The MVL mascot is a **lynx** — a solitary, sharp-eyed predator that sees what others miss. It's not an accident.
