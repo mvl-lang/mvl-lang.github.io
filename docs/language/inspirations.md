@@ -1,6 +1,8 @@
 # Languages that Inspired MVL
 
-MVL is not a research language. It borrows heavily — from Rust's ownership model, from Erlang's actors, from Ada's certification discipline, from Eiffel's contracts, from decades of formal-methods theory. What makes MVL distinctive is the combination: **every borrowed feature exists because it is compile-time verifiable at LLM authorship cost.** Features that require deep human insight to annotate correctly were left behind, no matter how elegant. Features that a language model can produce reliably were included, no matter how verbose.
+MVL is not a research language. It takes ideas from many places — Rust's syntax and its `Result`/`Option`/exhaustive-match discipline, Pony's reference capabilities for compile-time race freedom, Erlang's actors and supervision, Ada's certification track record, Eiffel's contracts, Koka's effect signatures, Liquid Haskell's refinements, and decades of formal-methods theory. What makes MVL distinctive is the combination: **every inherited feature exists because it is compile-time verifiable at LLM authorship cost.** Features that require deep human insight to annotate correctly were left behind, no matter how elegant. Features that a language model can produce reliably were included, no matter how verbose.
+
+A common misreading of MVL is "Rust plus verification." The syntax invites it, but the substance is different. MVL does not have Rust's borrow checker, its lifetimes, its traits, its macros, or its unsafe blocks. What MVL takes from Rust is the *shape* of a modern statically-typed systems language. What MVL takes for aliasing and concurrency is Pony's capability model, which is a fundamentally different mechanism. What MVL takes for verification is a synthesis of six other lineages that Rust does not attempt.
 
 This page is the credits reel. Each entry names what MVL took and what it left behind.
 
@@ -206,7 +208,7 @@ Each rejection is deliberate. Every dropped feature is a property the compiler c
 
 ## The pattern
 
-MVL is **Rust's core** + **Eiffel's contracts** + **Erlang's actors** + **Ada's certification discipline** + **Koka's effects** + **Liquid Haskell's refinements** + **Jif's information flow** + **modern supply-chain hygiene** — held together by one bet:
+MVL is **Rust's syntax and error discipline** + **Pony's reference capabilities** + **Eiffel's contracts** + **Erlang's actors and supervision** + **Ada's certification discipline** + **Koka's effects** + **Liquid Haskell's refinements** + **Jif's information flow** + **modern supply-chain hygiene** — held together by one bet:
 
 > The annotation burden that made effects, IFC, refinements, contracts, and totality impractical for humans is trivial for LLMs. Every borrowed feature exists because it is compile-time verifiable at LLM authorship cost. The languages that failed to reach mainstream adoption failed on annotation ergonomics, not on verification power. MVL removes the human from that equation.
 
