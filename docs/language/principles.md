@@ -51,7 +51,7 @@ Effects, IFC labels, ownership, refinements, termination, errors — all visible
 pub partial fn transfer(
     from: Secret[String],        // IFC: secret account ID
     amount: Int where self > 0,  // Refinement: must be positive
-    val db: SqliteDb,            // Ownership: borrowed, not consumed
+    val db: SqliteDb,            // Capability: immutable alias, sendable, not consumed
 ) -> Result[Unit, TransferError] ! DB + Audit  // Effects: database + audit trail
 ```
 

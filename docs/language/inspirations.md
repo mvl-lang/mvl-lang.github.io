@@ -32,14 +32,15 @@ Contracts as first-class program elements, not comments. Bertrand Meyer coined `
 
 ---
 
-## Rust — the closest ancestor
+## Rust — the syntactic ancestor
 
-If MVL is one language distilled from many, that language is Rust. Ownership, borrowing, exhaustive pattern matching, `Result[T, E]`, `Option[T]`, no null, no exceptions, no inheritance — all Rust. The syntax deliberately looks like Rust so that Rust developers recognize the shape immediately.
+If MVL is one language distilled from many, that language *looks* like Rust. Ownership as a discipline, exhaustive pattern matching, `Result[T, E]`, `Option[T]`, no null, no exceptions, no inheritance, immutability by default — all recognisably Rust. The syntax was deliberately kept close so that Rust developers recognise the shape immediately.
 
-MVL diverges in three directions:
+MVL diverges in four important directions:
 
-- **More verification.** Rust proves memory safety and type safety brilliantly. MVL adds effect tracking, termination, refinement types, and information flow control — five additional properties Rust does not verify.
-- **Less flexibility.** Rust's macro system, trait system, unsafe blocks, and lifetime annotations exist for expressiveness. MVL removes all of them. The LLM writes verbose explicit code instead.
+- **No borrowing, no lifetimes.** MVL does not have Rust's borrow checker. There is no `&'a T`, no `&'a mut T`, no lifetime annotations, no zero-copy slice discipline. Aliasing is handled by Pony-style reference capabilities (`val` / `ref` / `iso`), which is a fundamentally different mechanism — see the [Pony](#pony-reference-capabilities) section below. This is a deliberate contraction: lifetime annotation is one of the few things LLMs consistently produce incorrectly, and its verification cost is high relative to what capabilities buy you at actor boundaries.
+- **More verification.** Rust proves memory safety and type safety brilliantly. MVL adds effect tracking, termination, refinement types, information flow control, and structured concurrency — five additional properties Rust does not verify.
+- **Less flexibility.** Rust's macro system, trait system, unsafe blocks, and lifetime system exist for expressiveness. MVL removes all of them. The LLM writes verbose explicit code instead.
 - **One backend, one proof chain.** Rust ships one compiler (`rustc`). MVL emits Rust *and* LLVM IR, then differentially tests them against each other. The long-term destination is a formally verified LLVM path with `rustc` out of the trust chain (spec 012, Phase 5).
 
 Cargo also shaped `mvl install`, `mvl.toml`, and the lock-file model. The SBOM tooling extends Cargo's dependency graph with cryptographic hashes and provenance.
@@ -127,9 +128,23 @@ Zig's insistence that every allocation, every I/O operation, and every control-f
 
 ---
 
-## Pony — data race freedom by construction
+## Pony — reference capabilities
 
-Pony (Clebsch, 2015) introduced reference capabilities that prove data race freedom at compile time. Every reference carries a capability (`iso`, `val`, `ref`, `box`, `tag`, `trn`) that describes what aliasing is permitted. MVL adopts a simplified version — value semantics, `val`-borrowed, or `iso`-isolated for sendability — and applies it to actor message boundaries. Requirement 9 (data race freedom) is Pony's contribution combined with Erlang's actor model.
+Pony (Clebsch, 2015) is the direct source of MVL's aliasing model — a role that many readers assume belongs to Rust. It does not. Rust uses **lifetimes** to prove that references do not outlive their referents; Pony uses **reference capabilities** to prove that aliases cannot race. These are different mechanisms solving different problems.
+
+Pony assigns every reference one of six capabilities: `iso` (isolated — exactly one alias, mutable, sendable), `val` (immutable value — many aliases, no writes, sendable), `ref` (mutable — many aliases in the same actor), `box` (read-only view), `tag` (opaque identity only), `trn` (writable now, freezable to `val`). The compiler tracks capabilities through every expression and enforces sendability at actor boundaries: only `iso` and `val` may cross.
+
+MVL adopts a **contracted** version — three capabilities where Pony has six:
+
+| MVL capability | Meaning | Pony equivalent |
+|----------------|---------|-----------------|
+| `val` | immutable value; freely aliasable; sendable | `val` |
+| `ref` | mutable within one actor; not sendable | `ref` |
+| `iso` | uniquely-owned; mutable; sendable by transfer | `iso` |
+
+`box`, `tag`, and `trn` are dropped because the additional annotation surface is not worth the flexibility once dynamic dispatch and inheritance are also gone. What remains is the essential property Pony pioneered: **compile-time data race freedom without a garbage collector and without a borrow checker.**
+
+Requirement 9 (data race freedom) is Pony's contribution, combined with Erlang's actor model. MVL does not have Rust's ownership *system* — it has Rust's ownership *syntax* on top of Pony's capability *semantics*. This is not a distinction most language designers would make; MVL makes it deliberately because the LLM authors the annotations and the compiler needs the discipline that produces the tightest verification per annotation token.
 
 ---
 
