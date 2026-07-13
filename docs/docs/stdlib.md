@@ -37,7 +37,7 @@ Everything in `std.*` is either pure MVL or a `builtin` declaration backed by th
 
 ### Always-Available Functions
 
-```mvl
+```rust
 println(s: String) -> Unit ! Console
 print(s: String)   -> Unit ! Console
 eprintln(s: String) -> Unit ! Console
@@ -110,7 +110,7 @@ opt.is_none() -> Bool
 
 ### `std.io` — File I/O and stdin
 
-```mvl
+```rust
 use std.io.{read_file, write_file, append_file, delete_file,
             file_exists, path, IoError}
 ```
@@ -127,11 +127,11 @@ use std.io.{read_file, write_file, append_file, delete_file,
 
 ### `std.log` — Structured Logging
 
-```mvl
+```rust
 use std.log.{Logger, default_logger, LogLevel, LogFormat}
 ```
 
-```mvl
+```rust
 let logger: Logger = default_logger();
 
 logger.debug("event", {"key": "value"})  // ! Log
@@ -144,7 +144,7 @@ All log calls are structured key-value maps. No string interpolation — values 
 
 ### `std.env` — Process Environment
 
-```mvl
+```rust
 use std.env.{get, set, all, current_dir}
 ```
 
@@ -157,7 +157,7 @@ use std.env.{get, set, all, current_dir}
 
 ### `std.net` — TCP Networking
 
-```mvl
+```rust
 use std.net.{TcpListener, TcpStream, tcp_listen, tcp_accept,
             tcp_connect, tcp_read_request, tcp_write,
             tcp_close_listener, tcp_close_stream, NetError}
@@ -167,7 +167,7 @@ All network operations declare `! Net`. Connections are linear types — they mu
 
 ### `std.args` — CLI Argument Parsing
 
-```mvl
+```rust
 use std.args.{parse_args, required, optional, ArgType, ArgValue}
 
 let cli: Map[String, ArgValue] = parse_args([
@@ -180,7 +180,7 @@ The schema is the specification — no code generation, no macros.
 
 ### `std.json` — JSON Encode/Decode
 
-```mvl
+```rust
 use std.json.{Value, parse, encode, ParseError}
 
 let json: Result[Value, ParseError] = parse(raw_string);
@@ -191,7 +191,7 @@ Pure MVL implementation. Returns `Result` — never panics on bad input.
 
 ### `std.math` — Numeric Functions
 
-```mvl
+```rust
 use std.math.{floor, ceil, round, sqrt, pow, log, exp, abs,
               sin, cos, tan, PI, E}
 ```
@@ -200,7 +200,7 @@ All functions are pure (`total`, no effects). Floating-point functions follow IE
 
 ### `std.time` — Time and Duration
 
-```mvl
+```rust
 use std.time.{Instant, DateTime, Duration, now, sleep, format_datetime}
 
 let t: Instant = now();          // ! Clock
@@ -209,7 +209,7 @@ sleep(Duration::millis(500));    // ! Clock
 
 ### `std.crypto` — Hashing and Secure Random
 
-```mvl
+```rust
 use std.crypto.{sha256, sha512, crypto_random_bytes}
 
 let hash:  List[Byte] = sha256(data);    // pure — no effect
@@ -218,7 +218,7 @@ let bytes: List[Byte] = crypto_random_bytes(32);  // ! Random
 
 ### `std.random` — Pseudorandom Numbers
 
-```mvl
+```rust
 use std.random.{random_int, random_float, random_choice}
 
 let n: Int = random_int(1, 100);       // ! Random
@@ -227,7 +227,7 @@ let f: Float = random_float();         // ! Random
 
 ### `std.process` — Subprocess Management
 
-```mvl
+```rust
 use std.process.{spawn_process, Child, ExitStatus, ProcessError}
 
 let child: Child = spawn_process("git", ["status"])?;  // ! ProcessSpawn
@@ -236,7 +236,7 @@ let status: ExitStatus = child.wait()?;
 
 ### `std.audit` — Compliance Audit Trail
 
-```mvl
+```rust
 use std.audit.{AuditLogger, AuditEvent, file_audit_logger,
                modify, access, deny}
 
@@ -250,7 +250,7 @@ let _: Result[Unit, IoError] = auditor.emit(event.fail("msg")); // with error
 
 ### `std.ifc` — User-Defined IFC Labels
 
-```mvl
+```rust
 use std.ifc.{Tainted, Secret, Public}
 
 // Custom label declarations go in your source:
@@ -260,7 +260,7 @@ relabel trust: ApiKey -> _ audit;
 
 ### `std.actors` — Fault-Tolerant Actor Supervision
 
-```mvl
+```rust
 use std.actors.{link, monitor, unlink, ActorRef, ExitReason}
 
 // Link two actors: if either dies, the other is notified
@@ -272,7 +272,7 @@ monitor(supervisor, worker);
 
 ### `std.collections` — Extended Collection Operations
 
-```mvl
+```rust
 use std.collections.{group_by, zip, enumerate, flatten, chunks}
 
 let grouped: Map[String, List[T]] = group_by(xs, |x: T| key_fn(x));
@@ -281,7 +281,7 @@ let pairs:   List[(A, B)]         = zip(as, bs);
 
 ### `std.config` — Layered Configuration
 
-```mvl
+```rust
 use std.config.{ConfigValue, merge, with_env, from_toml, as_int, as_string}
 ```
 
@@ -289,7 +289,7 @@ Implements Defaults → TOML → Env → CLI layering. See `examples/crud_api/co
 
 ### `std.testing` — Test Framework
 
-```mvl
+```rust
 test fn my_test() -> Unit {
     assert(1 + 1 == 2);
     assert_eq(double(5), 10);
@@ -301,7 +301,7 @@ Run with `mvl test file.mvl`. Test functions are marked `test fn` — orthogonal
 
 ### `std.pbt` — Property-Based Testing
 
-```mvl
+```rust
 use std.pbt.{gen_int, gen_string, property_check, Shrinkable}
 
 property_check(100, gen_int(0, 1000), |n: Int| {
@@ -313,7 +313,7 @@ Generates random inputs, checks the property, and shrinks failing cases.
 
 ### `std.runtime` — Build Metadata
 
-```mvl
+```rust
 use std.runtime.{manifest, Manifest}
 
 let m: Manifest = manifest();

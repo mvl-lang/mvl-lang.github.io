@@ -20,7 +20,7 @@ MVL inverts this. The compiler generates observability hooks. The runtime emits 
 
 MVL logging is structured by default. No string interpolation, no printf formatting — key-value pairs that machines can parse.
 
-```mvl
+```rust
 use std.log.{Logger, default_logger, LogLevel}
 
 fn process_order(order_id: String, amount: Int) -> Result[Unit, OrderError] ! Log {
@@ -91,7 +91,7 @@ This links every log entry to its SBOM — you can trace any production log back
 
 Information Flow Control labels track sensitive data through your program. When data crosses a trust boundary via `relabel`, MVL emits an audit record.
 
-```mvl
+```rust
 use std.ifc.{Tainted, trust}
 
 label PCI
@@ -143,7 +143,7 @@ The compiler enforces that every `audit` relabel has a tag. You can't accidental
 
 MVL exposes Prometheus-compatible metrics for runtime observability.
 
-```mvl
+```rust
 use std.metrics.{Counter, Gauge, Histogram, register}
 
 fn main() -> Unit ! Metrics {
@@ -197,7 +197,7 @@ mvl_ifc_relabels_total{from="PCI",to="_",relabel="tokenize"} 3421
 
 For microservices architectures, MVL supports distributed tracing with W3C Trace Context propagation.
 
-```mvl
+```rust
 use std.trace.{Span, start_span, current_span}
 use pkg.http.{Request, Response}
 
@@ -230,7 +230,7 @@ fn handle_request(req: Request) -> Response ! Trace + Net {
 
 When calling external services, trace context propagates automatically:
 
-```mvl
+```rust
 use pkg.http.{Client, Request}
 
 fn call_downstream(client: Client, req: Request) -> Response ! Net + Trace {
@@ -258,7 +258,7 @@ sample_rate = 0.1              # Sample 10% of traces
 
 Observability in MVL is tracked through the effect system. Functions that emit telemetry declare it in their signature:
 
-```mvl
+```rust
 fn pure_compute(x: Int) -> Int {
     x * 2  // no effects — no telemetry
 }

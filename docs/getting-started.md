@@ -4,7 +4,7 @@
 
 Create `hello.mvl`:
 
-```mvl
+```rust
 fn main() -> Unit ! Console {
     println("Hello, verified world!")
 }
@@ -23,7 +23,7 @@ The `! Console` declares that this function has a console side effect. MVL track
 
 Create `positive.mvl`:
 
-```mvl
+```rust
 fn double(x: Int where x > 0) -> Int where self > 0 {
     x * 2
 }
@@ -49,7 +49,7 @@ The compiler **proves** at compile time that:
 
 Try breaking it:
 
-```mvl
+```rust
 fn main() -> Unit ! Console {
     let result: Int = double(-1);  // ← compile error!
 }
@@ -75,7 +75,7 @@ This generates a verification report showing which requirements were proven, how
 
 This example demonstrates 7 of MVL's 11 compile-time requirements in a realistic banking scenario:
 
-```mvl
+```rust
 // MVL example demonstrating 7 of the 11 compile-time requirements
 
 // ── Types ─────────────────────────────────────────────────────────────────────

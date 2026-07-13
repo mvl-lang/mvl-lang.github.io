@@ -28,7 +28,7 @@ Before diving into supply chain, understand how MVL organizes code:
 
 The standard library ships with the compiler. Pure MVL, no extern blocks, fully verified.
 
-```mvl
+```rust
 use std.io.{println, read_file}
 use std.ifc.{Tainted, trust}
 use std.csv.{parse_with_headers}
@@ -54,7 +54,7 @@ use std.args.{parse_args, required}
 
 Third-party packages from git repositories. The package author takes responsibility for the trust boundary between their `extern` code and the verified API.
 
-```mvl
+```rust
 use pkg.http.{Server, Request, Response}
 use pkg.sqlite.{Connection, Query}
 use pkg.tls.{TlsConfig}
@@ -80,7 +80,7 @@ mvl_http/
 
 Your project code. Same verification as std, but you can add extern blocks when needed.
 
-```mvl
+```rust
 // src/main.mvl
 use std.io.println
 use pkg.http.{Server, Request, Response}
@@ -303,7 +303,7 @@ PASS: supply chain audit complete
 
 At runtime, your program knows its own supply chain via `std.runtime`:
 
-```mvl
+```rust
 use std.runtime.{package_info, PackageInfo}
 use std.log.{Logger, default_logger}
 

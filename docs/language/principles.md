@@ -47,7 +47,7 @@ Consequences: no macros, no string interpolation, no list comprehensions. `forma
 
 Effects, IFC labels, ownership, refinements, termination, errors — all visible in the type signature. Reading a signature reveals the whole contract; nothing is ambient.
 
-```mvl
+```rust
 pub partial fn transfer(
     from: Secret[String],        // IFC: secret account ID
     amount: Int where self > 0,  // Refinement: must be positive

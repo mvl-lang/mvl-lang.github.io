@@ -60,7 +60,7 @@ The compiler runs five phases internally:
 
 ### Functions
 
-```mvl
+```rust
 // Pure function — no effects declared, no side effects allowed
 total fn add(a: Int, b: Int) -> Int { a + b }
 
@@ -82,7 +82,7 @@ fn safe_divide(a: Float, b: Float) -> Float
 
 ### Types
 
-```mvl
+```rust
 // Struct with field-level refinements
 type Port = struct {
     number: Int where self > 0 && self < 65536,
@@ -103,7 +103,7 @@ type PositiveInt = Int where self > 0
 
 Effects are declared in function signatures with `!`. Callers must declare every effect their callees use — nothing is hidden.
 
-```mvl
+```rust
 fn read_config(path: String) -> Result[Config, IoError] ! FileRead {
     let raw: String = read_file(path)?;   // ? propagates the error
     parse_config(raw)
@@ -117,7 +117,7 @@ fn main() -> Unit ! Console + FileRead {
 
 ### Information Flow
 
-```mvl
+```rust
 fn handle(input: Tainted[String]) -> String {
     relabel trust(input, "XSS-validated")   // explicit, audited declassification
 }
@@ -129,7 +129,7 @@ fn handle(input: Tainted[String]) -> String {
 
 ### Actors
 
-```mvl
+```rust
 actor Counter {
     count: Int
 

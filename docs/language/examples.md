@@ -8,7 +8,7 @@ These examples are drawn from the MVL corpus and test suite. Each demonstrates a
 
 Requirements 1 and 3 — algebraic data types and exhaustive match.
 
-```mvl
+```rust
 type AuthError = enum {
     NotFound,
     InvalidPassword,
@@ -37,7 +37,7 @@ The `AccountLocked` variant carries a field with a refinement — `attempts >= 0
 
 Requirements 4 and 5 — `Option[T]` and `Result[T, E]`.
 
-```mvl
+```rust
 use std.io.{read_file, IoError}
 
 fn parse_port(s: String) -> Option[Int] {
@@ -64,7 +64,7 @@ partial fn load_config(path: String) -> Result[Int, IoError] ! FileRead {
 
 Requirement 7 — effects are declared in signatures, not hidden.
 
-```mvl
+```rust
 // Pure function — no effects, provably free of side effects
 total fn celsius_to_fahrenheit(c: Float) -> Float {
     c * 1.8 + 32.0
@@ -94,7 +94,7 @@ The compiler rejects a function that calls `println` but does not declare `! Con
 
 Requirement 8 — `total` functions are proven to terminate.
 
-```mvl
+```rust
 // total: compiler proves this terminates via structural recursion
 total fn factorial(n: Int where self >= 0) -> Int {
     if n <= 1 { 1 } else { n * factorial(n - 1) }
@@ -130,7 +130,7 @@ partial fn server_loop(listener: TcpListener) -> Unit ! Net {
 
 Requirement 10 — value constraints proven at compile time.
 
-```mvl
+```rust
 type PositiveInt = Int where self > 0
 type Port        = Int where self > 0 && self < 65536
 
@@ -157,7 +157,7 @@ The layered solver (Layers 1–5: trivial, interval, symbolic, Cooper arithmetic
 
 Requirement 11 — secret data cannot reach unauthorized sinks.
 
-```mvl
+```rust
 use std.ifc.{Tainted, Secret}
 
 // External input arrives as Tainted — cannot reach the database without validation
@@ -192,7 +192,7 @@ Every `relabel` call with its audit tag appears in the assurance report — a co
 
 Requirement 9 — no shared mutable state, no races.
 
-```mvl
+```rust
 actor RequestCounter {
     total_requests: Int
     by_route: Map[String, Int]
@@ -233,7 +233,7 @@ The actor's fields are accessible only through its methods. Concurrent senders c
 
 Requirement 6 — resources used exactly once.
 
-```mvl
+```rust
 partial fn process_file(path: String) -> Result[Unit, IoError] ! FileRead + FileWrite {
     let file: FileHandle = open_file(path, FileMode::ReadWrite)?;
 
@@ -257,7 +257,7 @@ partial fn process_file(path: String) -> Result[Unit, IoError] ! FileRead + File
 
 A realistic HTTP handler using requirements 1, 4, 5, 7, 10, and 11 together:
 
-```mvl
+```rust
 use models::{User, CreateUserRequest}
 use pkg.rest.json.{json_ok_str, json_error, json_created_str,
                    body_obj, json_field_string, http_bad_request}

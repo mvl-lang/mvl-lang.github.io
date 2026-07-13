@@ -34,7 +34,7 @@ The lock file (`mvl.lock`) pins every dependency to an exact commit and SHA-256 
 
 > MVL HTTP package — request parsing, response building, routing, REST helpers
 
-```mvl
+```rust
 use pkg.http.{Request, Response, Router, HttpMethod,
               new_router, route, dispatch, parse_request, serialize_response}
 ```
@@ -51,7 +51,7 @@ pkg-http = { git = "https://github.com/mvl-lang/pkg-http", tag = "v1.2.0" }
 
 > MVL REST client — typed JSON POST/GET over TLS
 
-```mvl
+```rust
 use pkg.rest.json.{json_ok_str, json_created_str, json_no_content, json_error,
                    param_int, body_obj, json_field_string, json_str,
                    http_not_found, http_bad_request, http_internal_error}
@@ -69,14 +69,14 @@ pkg-rest = { git = "https://github.com/mvl-lang/pkg-rest", tag = "v1.1.0" }
 
 > MVL sqlite package — wraps rusqlite behind a fully-verified MVL API
 
-```mvl
+```rust
 use pkg.sqlite.{SqliteDb, SqliteError, open, execute, query, query_scalar, close}
 use std.db.{DbValue}
 ```
 
 Opens a file-backed SQLite database and exposes `execute`, `query`, and `query_scalar`. All operations return `Result`. Parameterised queries use `DbValue` — no string interpolation, no injection.
 
-```mvl
+```rust
 // Insert with bound parameters — safe by construction
 execute(db, "INSERT INTO users (name, email) VALUES (?, ?)", [
     DbValue::Text(req.name),
@@ -94,7 +94,7 @@ pkg-sqlite = { git = "https://github.com/mvl-lang/pkg-sqlite", tag = "v0.2.3" }
 
 > MVL health check package — liveness, readiness, component health types
 
-```mvl
+```rust
 use pkg.health.{HealthStatus, HealthReport, ComponentHealth, make_report, health_to_response}
 ```
 
@@ -114,13 +114,13 @@ pkg-health = { git = "https://github.com/mvl-lang/pkg-health", tag = "v0.3.0" }
 
 > MVL metrics package — counters, gauges, histograms with effect tracking
 
-```mvl
+```rust
 use pkg.metrics.{effect Metric, Metrics, new_metrics, start_prometheus_exporter}
 ```
 
 Prometheus-compatible metrics with a custom `Metric` effect. Metric operations declare `! Metric` — the effect system makes observability explicit, not hidden.
 
-```mvl
+```rust
 metrics.counter_inc("http_requests_total", {"method": "GET", "route": "/users"});
 ```
 
@@ -136,13 +136,13 @@ pkg-metrics = { git = "https://github.com/mvl-lang/pkg-metrics", tag = "v0.3.0" 
 
 > MVL distributed tracing package — spans, trace context, W3C propagation
 
-```mvl
+```rust
 use pkg.trace.{Trace, Tracer, default_tracer, trace_start, span_start, span_end, span_error, TraceContext}
 ```
 
 W3C Trace Context compatible distributed tracing. `TraceContext` carries a `trace_id` and `span_id` through your request lifecycle. Spans are emitted to stderr in a structured format compatible with OpenTelemetry collectors.
 
-```mvl
+```rust
 let ctx: TraceContext = trace_start("service.boot");
 let span: TraceContext = span_start("handler.create_user", ctx);
 // ... work ...
@@ -159,7 +159,7 @@ pkg-trace = { git = "https://github.com/mvl-lang/pkg-trace", tag = "v0.2.0" }
 
 > MVL TLS package — TLS 1.3 client via rustls, HTTPS convenience layer
 
-```mvl
+```rust
 use pkg.tls.{TlsStream, tls_connect, tls_close}
 ```
 
@@ -175,7 +175,7 @@ pkg-tls = { git = "https://github.com/mvl-lang/pkg-tls", tag = "v0.1.0" }
 
 > MVL ZeroMQ-style messaging — REQ/REP, PUB/SUB, PUSH/PULL over TCP
 
-```mvl
+```rust
 use pkg.zmq.{ZmqSocket, ZmqSocketType, ZmqError,
              zmtp_handshake_server, zmtp_handshake_client,
              zmq_send, zmq_recv, zmq_error_msg}
@@ -193,7 +193,7 @@ pkg-zmq = { git = "https://github.com/mvl-lang/pkg-zmq", tag = "v0.2.0" }
 
 > MVL terminal UI package — raw mode, ANSI styles, keyboard input
 
-```mvl
+```rust
 use pkg.tui.{Terminal, Style, Color, Key, enter_raw_mode, exit_raw_mode,
              clear_screen, move_cursor, read_key}
 ```
@@ -210,14 +210,14 @@ pkg-tui = { git = "https://github.com/mvl-lang/pkg-tui", tag = "v0.1.0" }
 
 > Anthropic Claude SDK for MVL — typed Messages API client with IFC security
 
-```mvl
+```rust
 use pkg.anthropic.{AnthropicClient, Message, Role, Content,
                    create_message, ApiKey}
 ```
 
 A typed MVL client for the [Anthropic Messages API](https://docs.anthropic.com/en/api/messages). API keys are typed as `Secret[String]` — the IFC system prevents them from leaking to logs or responses without explicit declassification.
 
-```mvl
+```rust
 let key: Secret[String] = relabel classify(api_key_env_var, "anthropic-api-key");
 let response: Message = create_message(client, [
     Message { role: Role::User, content: Content::Text("Hello, Claude") }
