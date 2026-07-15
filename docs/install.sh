@@ -133,20 +133,52 @@ install_rust() {
   ok "Rust installed"
 }
 
-# Resolve MVL_VERSION to a concrete tag.  For explicit tags, echo as-is.
-# For "latest", query the GitHub Releases API — this matches what the
-# GitHub UI calls "Latest release", which is what humans mean by
-# "latest".  Returns empty on network failure; caller must handle the
-# fallback.  Uses --max-time 5 so a dead API can't hang the install.
+# Resolve MVL_VERSION to a concrete tag.  For explicit tags, echo
+# as-is.  For "latest", we deliberately avoid api.github.com because
+# it rate-limits to 60/hr per unauthenticated IP — corporate NATs
+# behind a single egress IP hit that trivially.
+#
+# Instead we use the HTML endpoint on github.com:
+#   github.com/OWNER/REPO/releases/latest  →  302 →  .../releases/tag/<TAG>
+# Following the redirect and extracting the tag from the final URL
+# uses a much higher rate-limit tier that shared IPs won't hit in
+# normal install use.  If the redirect fails (private repo, DNS,
+# offline), we return empty and the caller falls back to
+# `git describe` after cloning.
+#
+# Order matters:
+#   1. HTML redirect          (rate-limit-safe, no auth needed)
+#   2. Authenticated API      (if GITHUB_TOKEN is exported)
+#   3. Empty → caller uses git describe as final fallback
 resolve_version() {
   if [ "$MVL_VERSION" != "latest" ]; then
     printf '%s' "$MVL_VERSION"
     return 0
   fi
-  API_URL="https://api.github.com/repos/${MVL_REPO}/releases/latest"
-  curl -fsSL --max-time 5 "$API_URL" 2>/dev/null \
-    | grep -m1 '"tag_name"' \
-    | sed -E 's/.*"tag_name" *: *"([^"]+)".*/\1/'
+
+  # 1. HTML redirect — the reliable path
+  EFFECTIVE=$(curl -fsSL --max-time 5 -o /dev/null -w '%{url_effective}' \
+    "https://github.com/${MVL_REPO}/releases/latest" 2>/dev/null)
+  case "$EFFECTIVE" in
+    */tag/*)
+      printf '%s' "${EFFECTIVE##*/tag/}"
+      return 0
+      ;;
+  esac
+
+  # 2. Authenticated API fallback — useful if HTML is blocked by a
+  #    proxy but the API is allowed, and the user has a token.
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    curl -fsSL --max-time 5 \
+      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+      "https://api.github.com/repos/${MVL_REPO}/releases/latest" 2>/dev/null \
+      | grep -m1 '"tag_name"' \
+      | sed -E 's/.*"tag_name" *: *"([^"]+)".*/\1/'
+    return $?
+  fi
+
+  # 3. Return empty; caller handles.
+  return 0
 }
 
 check_git() {
@@ -325,9 +357,9 @@ main() {
   if [ "$CHECK_ONLY" = "1" ]; then
     RESOLVED_VERSION=$(resolve_version)
     if [ -z "$RESOLVED_VERSION" ]; then
-      DISPLAY_VERSION="latest (couldn't reach GitHub API — will resolve via git after clone)"
+      DISPLAY_VERSION="latest (couldn't resolve — will use git describe after clone)"
     elif [ "$MVL_VERSION" = "latest" ]; then
-      DISPLAY_VERSION="$RESOLVED_VERSION (resolved from GitHub Releases 'Latest')"
+      DISPLAY_VERSION="$RESOLVED_VERSION (from github.com releases/latest)"
     else
       DISPLAY_VERSION="$RESOLVED_VERSION (explicit MVL_VERSION)"
     fi
