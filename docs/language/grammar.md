@@ -138,8 +138,14 @@ base_type      = IDENT [ "[" type_list "]" ] ;
 option_type    = "Option" "[" type_expr "]" ;
 result_type    = "Result" "[" type_expr "," type_expr "]" ;
 ref_type       = ( "val" | "ref" ) type_expr ;
-labeled_type   = security_label "[" type_expr "]" ;
-security_label = "Public" | "Tainted" | "Secret" ;
+(* Labeled type: syntactically identical to `base_type` (an IDENT with a       *)
+(* single type argument).  The distinction is *semantic*: the leading IDENT    *)
+(* must be a declared IFC label — either a stdlib-preseeded label (`Tainted`,  *)
+(* `Secret`, `ConfigPath`, `DbUrl`, `ApiEndpoint`, `AuditTarget`) or one       *)
+(* declared via `label_decl` in the current module.  There is no fixed set of  *)
+(* label names; `Public` is NOT a keyword or a stdlib label — it is spelled by *)
+(* its *absence* (an unlabeled type is public by default).                     *)
+labeled_type   = IDENT "[" type_expr "]" ;  (* IDENT ∈ declared-label set *)
 refined_type   = type_expr "where" refinement ;
 fn_type        = "fn" "(" type_list ")" "->" type_expr [ "!" effect_list ] ;
 type_list      = type_expr { "," type_expr } ;
