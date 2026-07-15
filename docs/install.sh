@@ -3,6 +3,10 @@
 #
 # Usage:
 #   curl -fsSL https://mvl-lang.org/install.sh | sh
+#   curl -fsSL https://mvl-lang.org/install.sh | sh -s -- --check
+#
+# Options:
+#   --check, -c        Verify prerequisites and exit (nothing installed)
 #
 # Environment variables:
 #   MVL_INSTALL_DIR    — install location (default: ~/.local/bin)
@@ -24,6 +28,25 @@
 # License: Apache-2.0
 
 set -eu
+
+# ── Argument parsing ───────────────────────────────────────────────────
+
+CHECK_ONLY=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --check|-c) CHECK_ONLY=1 ;;
+    --help|-h)
+      sed -n '2,26p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'
+      exit 0
+      ;;
+    *)
+      printf "Unknown option: %s\n" "$1" >&2
+      printf "Try: curl -fsSL https://mvl-lang.org/install.sh | sh -s -- --help\n" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
 
 # ── Constants ──────────────────────────────────────────────────────────
 
@@ -94,6 +117,11 @@ check_rust() {
     ok "Rust toolchain found: $("$RUSTC" --version 2>/dev/null || echo 'unknown')"
     return 0
   fi
+  if [ "$CHECK_ONLY" = "1" ]; then
+    printf "  ${RED}✗${RESET} Rust toolchain NOT found\n"
+    printf "      The installer will fetch it via rustup on a real run.\n"
+    return 1
+  fi
   return 1
 }
 
@@ -107,9 +135,38 @@ install_rust() {
 
 check_git() {
   if command -v git >/dev/null 2>&1; then
+    ok "git found: $(command -v git)"
     return 0
   fi
+  if [ "$CHECK_ONLY" = "1" ]; then
+    printf "  ${RED}✗${RESET} git NOT found\n"
+    printf "      Install via your package manager (git-scm.com)\n"
+    return 1
+  fi
   abort "git is required but not found. Please install git first."
+}
+
+# The Z3 install command for the current platform.  Prints one line
+# with the recommended command, or a hint if we can't detect the
+# platform's package manager.
+z3_install_hint() {
+  case "$(uname -s)" in
+    Darwin)  printf "brew install z3\n" ;;
+    Linux)
+      if command -v apt-get >/dev/null 2>&1; then
+        printf "sudo apt-get install -y libz3-dev z3\n"
+      elif command -v dnf >/dev/null 2>&1; then
+        printf "sudo dnf install -y z3 z3-devel\n"
+      elif command -v pacman >/dev/null 2>&1; then
+        printf "sudo pacman -S --noconfirm z3\n"
+      elif command -v apk >/dev/null 2>&1; then
+        printf "sudo apk add z3 z3-dev\n"
+      else
+        printf "(Use your distribution's package manager to install z3 + z3-dev/devel)\n"
+      fi
+      ;;
+    *) printf "(Install z3 for your platform — https://github.com/Z3Prover/z3)\n" ;;
+  esac
 }
 
 # The MVL compiler's refinement solver uses z3-sys, which links against
@@ -122,31 +179,15 @@ check_z3() {
     return 0
   fi
 
+  if [ "$CHECK_ONLY" = "1" ]; then
+    printf "  ${RED}✗${RESET} Z3 solver NOT found\n"
+    printf "      %s" "$(z3_install_hint)"
+    return 1
+  fi
+
   printf "\n${RED}Z3 solver not found.${RESET}\n"
   printf "MVL's refinement checker depends on Z3.  Install it before continuing:\n\n"
-
-  case "$(uname -s)" in
-    Darwin)
-      printf "  brew install z3\n"
-      ;;
-    Linux)
-      if command -v apt-get >/dev/null 2>&1; then
-        printf "  sudo apt-get install -y libz3-dev z3\n"
-      elif command -v dnf >/dev/null 2>&1; then
-        printf "  sudo dnf install -y z3 z3-devel\n"
-      elif command -v pacman >/dev/null 2>&1; then
-        printf "  sudo pacman -S --noconfirm z3\n"
-      elif command -v apk >/dev/null 2>&1; then
-        printf "  sudo apk add z3 z3-dev\n"
-      else
-        printf "  (Use your distribution's package manager to install z3 + z3-dev/devel)\n"
-      fi
-      ;;
-    *)
-      printf "  (Install z3 for your platform — see https://github.com/Z3Prover/z3)\n"
-      ;;
-  esac
-
+  printf "  %s" "$(z3_install_hint)"
   printf "\nThen re-run this script.\n\n"
   exit 1
 }
@@ -256,6 +297,24 @@ main() {
   detect_platform
   info "Detected platform: ${TARGET}"
   printf "\n"
+
+  # --check mode: run all prerequisite checks, report status, exit.
+  # Nothing on disk is touched.  Non-zero exit iff any prereq missing.
+  if [ "$CHECK_ONLY" = "1" ]; then
+    printf "${BOLD}Prerequisites:${RESET}\n"
+    MISSING=0
+    check_git  || MISSING=$((MISSING + 1))
+    check_z3   || MISSING=$((MISSING + 1))
+    check_rust || MISSING=$((MISSING + 1))
+    printf "\n"
+    if [ "$MISSING" -eq 0 ]; then
+      ok "All prerequisites satisfied.  Run again without --check to install."
+      exit 0
+    else
+      printf "${RED}${MISSING} prerequisite(s) missing.${RESET}  Install them, then re-run without --check.\n"
+      exit 1
+    fi
+  fi
 
   # Check and install prerequisites
   check_git

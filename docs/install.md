@@ -48,6 +48,26 @@ This:
 
 No sudo required for MVL itself.
 
+### Check before installing
+
+To verify what's already on your system without installing anything, run with `--check`:
+
+```bash
+curl -fsSL https://mvl-lang.org/install.sh | sh -s -- --check
+```
+
+Sample output:
+
+```
+Prerequisites:
+  ✓ git found: /usr/bin/git
+  ✗ Z3 solver NOT found
+      brew install z3
+  ✓ Rust toolchain found: rustc 1.83.0
+```
+
+Exit code is non-zero if anything is missing, so it composes with CI/scripting. Nothing is written to disk in check mode.
+
 ### System prerequisites
 
 The script checks for these and stops with a clear install command if missing:
