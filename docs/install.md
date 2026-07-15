@@ -40,12 +40,30 @@ curl -fsSL https://mvl-lang.org/install.sh | sh
 
 This:
 
-1. Installs Rust if not present (via [rustup](https://rustup.rs/))
-2. Clones and builds MVL from source
-3. Installs the `mvl` binary to `~/.local/bin/`
-4. Adds `~/.local/bin` to your PATH
+1. Verifies system prerequisites (see below)
+2. Installs Rust if not present (via [rustup](https://rustup.rs/))
+3. Clones and builds MVL from source
+4. Installs the `mvl` binary to `~/.local/bin/`
+5. Adds `~/.local/bin` to your PATH
 
-No sudo required.
+No sudo required for MVL itself.
+
+### System prerequisites
+
+The script checks for these and stops with a clear install command if missing:
+
+- **git** — for cloning the source
+- **Z3** — required by MVL's refinement solver (transitively via `z3-sys`); the script does not attempt to install it because system-package installation requires `sudo`
+
+Install Z3 up front:
+
+| Platform | Command |
+|----------|---------|
+| macOS (Homebrew) | `brew install z3` |
+| Debian / Ubuntu | `sudo apt-get install -y libz3-dev z3` |
+| Fedora / RHEL | `sudo dnf install -y z3 z3-devel` |
+| Arch | `sudo pacman -S z3` |
+| Alpine | `sudo apk add z3 z3-dev` |
 
 ## Environment Variables
 

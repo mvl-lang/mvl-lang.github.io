@@ -80,8 +80,18 @@ detect_platform() {
 # ── Check prerequisites ────────────────────────────────────────────────
 
 check_rust() {
-  if command -v cargo >/dev/null 2>&1; then
-    ok "Rust toolchain found: $(rustc --version 2>/dev/null || echo 'unknown')"
+  # Rustup installs to $HOME/.cargo/bin but with --no-modify-path leaves
+  # the user's shell unchanged.  A prior partial install would have cargo
+  # on disk but not on PATH in a fresh non-interactive shell, causing
+  # rustup to needlessly re-run.  Source ~/.cargo/env if it exists, then
+  # look at both PATH and the standard rustup location.
+  if [ -f "$HOME/.cargo/env" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.cargo/env"
+  fi
+  if command -v cargo >/dev/null 2>&1 || [ -x "$HOME/.cargo/bin/cargo" ]; then
+    RUSTC="$(command -v rustc || echo "$HOME/.cargo/bin/rustc")"
+    ok "Rust toolchain found: $("$RUSTC" --version 2>/dev/null || echo 'unknown')"
     return 0
   fi
   return 1
@@ -100,6 +110,45 @@ check_git() {
     return 0
   fi
   abort "git is required but not found. Please install git first."
+}
+
+# The MVL compiler's refinement solver uses z3-sys, which links against
+# the Z3 C library at build time.  Cargo cannot install system libraries,
+# so we detect and instruct — auto-install would need sudo and package-
+# manager guessing that is best left to the user.
+check_z3() {
+  if command -v z3 >/dev/null 2>&1; then
+    ok "Z3 solver found: $(z3 --version 2>/dev/null | head -1)"
+    return 0
+  fi
+
+  printf "\n${RED}Z3 solver not found.${RESET}\n"
+  printf "MVL's refinement checker depends on Z3.  Install it before continuing:\n\n"
+
+  case "$(uname -s)" in
+    Darwin)
+      printf "  brew install z3\n"
+      ;;
+    Linux)
+      if command -v apt-get >/dev/null 2>&1; then
+        printf "  sudo apt-get install -y libz3-dev z3\n"
+      elif command -v dnf >/dev/null 2>&1; then
+        printf "  sudo dnf install -y z3 z3-devel\n"
+      elif command -v pacman >/dev/null 2>&1; then
+        printf "  sudo pacman -S --noconfirm z3\n"
+      elif command -v apk >/dev/null 2>&1; then
+        printf "  sudo apk add z3 z3-dev\n"
+      else
+        printf "  (Use your distribution's package manager to install z3 + z3-dev/devel)\n"
+      fi
+      ;;
+    *)
+      printf "  (Install z3 for your platform — see https://github.com/Z3Prover/z3)\n"
+      ;;
+  esac
+
+  printf "\nThen re-run this script.\n\n"
+  exit 1
 }
 
 # ── Clone or update repo ───────────────────────────────────────────────
@@ -210,6 +259,7 @@ main() {
 
   # Check and install prerequisites
   check_git
+  check_z3
   check_rust || install_rust
 
   printf "\n"
