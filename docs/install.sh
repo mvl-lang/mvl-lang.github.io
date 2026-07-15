@@ -12,6 +12,12 @@
 #   MVL_INSTALL_DIR    — install location (default: ~/.local/bin)
 #   MVL_VERSION        — version/tag to build (default: latest release)
 #   MVL_NO_MODIFY_PATH — set to 1 to skip PATH modification
+#   GITHUB_TOKEN       — optional personal access token for api.github.com
+#                        (5000/hr) as fallback when the public HTML
+#                        redirect is unavailable.  Public repos need no
+#                        scopes; the token just authenticates you against
+#                        GitHub's higher rate-limit tier.
+#                        Create one at github.com/settings/tokens.
 #
 # This script:
 #   1. Detects your OS and architecture
