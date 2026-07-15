@@ -6,6 +6,7 @@ Fastest path — installs a pre-built binary in seconds:
 
 ```bash
 brew tap mvl-lang/mvl
+brew trust mvl-lang/mvl    # Homebrew 6.x requires trusting third-party taps
 brew install mvl
 ```
 
@@ -17,6 +18,9 @@ mvl --help
 ```
 
 The Homebrew formula installs the compiler binary, standard library, and Rust FFI runtime. `MVL_HOME` is configured automatically by a wrapper in `bin/mvl`. See [`mvl-lang/homebrew-mvl`](https://github.com/mvl-lang/homebrew-mvl) for what the tap ships and how to update it.
+
+!!! note "About `brew trust`"
+    Homebrew 6.0 introduced a trust step for third-party taps to protect users from unreviewed formulae. This is a one-time step per tap. If you skip it, `brew install` will refuse to load the formula with a message telling you what to run.
 
 Platforms currently supported by the tap:
 
