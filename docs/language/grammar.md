@@ -2,7 +2,7 @@
 
 The MVL grammar is **LL(1)** — every construct can be parsed with a single token of lookahead. This is a deliberate design choice ([ADR-0005](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0005-recursive-descent-parser.md)): the parser is hand-written recursive descent, no parser generator, no PEG, no macros. The whole grammar fits in ≈100 productions, small enough for a developer to hold in working memory.
 
-The grammar below is the **authoritative specification**. The Rust parser, the [tree-sitter grammar](https://github.com/mvl-lang/mvl/blob/main/etc/tree-sitter-mvl/grammar.js), and any future MVL-in-MVL parser must all match it. `make test-grammar-coverage` verifies coverage against the corpus.
+The grammar below is the **authoritative specification**. The Rust parser, the [tree-sitter grammar](https://github.com/mvl-lang/mvl-spec/blob/main/tools/tree-sitter/grammar.js), and any future MVL-in-MVL parser must all match it. `make test-grammar-coverage` verifies coverage against the corpus.
 
 **Notation:** ISO 14977 Extended BNF.
 
@@ -14,7 +14,7 @@ The grammar below is the **authoritative specification**. The Rust parser, the [
 - `UPPER` — terminal token (see the *Lexical* section at the end)
 - `(* comment *)` — EBNF comment
 
-**Source of truth:** [`docs/grammar.ebnf`](https://github.com/mvl-lang/mvl/blob/main/docs/grammar.ebnf) in the compiler repo.
+**Source of truth:** [`grammar/grammar.ebnf`](https://github.com/mvl-lang/mvl-spec/blob/main/grammar/grammar.ebnf) in the `mvl-spec` repo.
 
 ---
 
@@ -61,7 +61,7 @@ alias_type     = type_expr ;
 (*   `where` in MVL is exclusively a solver-discharged refinement predicate  *)
 (*   attached to a param/return/field/alias type (`n: Int where self > 0`),  *)
 (*   never a trait-bound clause on a fn signature.  MVL has no trait system. *)
-fn_decl        = [ "test" ] [ totality ] [ "builtin" ] [ security ] "fn" fn_name [ type_params ]
+fn_decl        = [ "test" ] [ totality ] [ "builtin" ] "fn" fn_name [ type_params ]
                  "(" [ param_list ] ")" "->" return_type
                  [ "!" effect_list ]
                  { fn_contract }
@@ -74,7 +74,9 @@ contract_clause = ( "requires" | "ensures" ) ref_expr ;    (* Phase 5, #628 — 
 ghost_let_stmt  = "ghost" "let" pattern ":" type_expr "=" ref_expr ";" ; (* Phase 4, #627 — tree-sitter form *)
 totality       = "total" | "partial" ;
 (* builtin fn: runtime-provided implementation; body is forbidden *)
-security       = "public" | "tainted" | "secret" ;
+(* Security is expressed via wrapper types on parameters/return (`Tainted[T]`, *)
+(* `Secret[T]`) — see `labeled_type` below.  There is no fn-level security     *)
+(* prefix; lowercase `public`/`tainted`/`secret` are NOT reserved words.       *)
 param_list     = param { "," param } ;
 param          = [ capability ] IDENT ":" type_expr [ "where" refinement ] ;
 capability     = "iso" | "val" | "ref" | "tag" ;
@@ -102,15 +104,17 @@ actor_method   = [ "pub" ] "fn" IDENT "(" [ param_list ] ")" [ "->" return_type 
 
 (* === Effect declarations === *)
 (* `effect IO` — base effect; `effect FileIO > IO` — subsumes IO (#852). *)
-effect_decl    = "effect" IDENT [ ">" IDENT { "+" IDENT } ] ";" ;
+(* No trailing semicolon — declarations are terminated by the next top-level keyword. *)
+effect_decl    = "effect" IDENT [ ">" IDENT { "+" IDENT } ] ;
 
 (* === IFC label declarations (#894, #896) === *)
-(* `label Tainted;` — declares a user-defined security label for the module. *)
-(* `relabel trust: Tainted -> _` — declares a label transition.             *)
-(* `relabel trust: Tainted -> _ audit` — all call sites emit audit events.  *)
-label_decl     = "label" IDENT ";" ;
+(* `label Tainted` — declares a user-defined security label for the module.  *)
+(* `relabel trust: Tainted -> _` — declares a label transition.              *)
+(* `relabel trust: Tainted -> _ audit` — all call sites emit audit events.   *)
+(* No trailing semicolon on either form.                                     *)
+label_decl     = "label" IDENT ;
 label_ref      = IDENT | "_" ;
-relabel_decl   = [ "pub" ] "relabel" IDENT ":" label_ref "->" label_ref [ "audit" ] ";" ;
+relabel_decl   = [ "pub" ] "relabel" IDENT ":" label_ref "->" label_ref [ "audit" ] ;
 (* `relabel trust(expr, "TAG")` — applies a transition (expression form).   *)
 (* `relabel trust(expr, "TAG") audit` — this call site emits an audit event. *)
 relabel_expr   = "relabel" IDENT "(" expr "," STRING ")" [ "audit" ] ;
@@ -166,8 +170,8 @@ ref_atom       = IDENT { "." IDENT }                               (* field acce
                | exists_expr                                      (* Phase 5, #628 — existential quantifier *)
                | "(" ref_expr ")" | "!" ref_atom
                | ref_atom ( "+" | "-" | "*" | "/" | "%" ) ref_atom ;
-forall_expr    = "forall" IDENT ":" type_expr "." ref_expr ; (* Phase 5, #628 — tree-sitter form uses "." separator *)
-exists_expr    = "exists" IDENT ":" type_expr "." ref_expr ; (* Phase 5, #628 — tree-sitter form uses "." separator *)
+forall_expr    = "forall" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
+exists_expr    = "exists" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
 
 (* === Statements === *)
 block          = "{" { statement } "}" ;
@@ -179,7 +183,8 @@ return_stmt    = "return" [ expr ] ";" ;
 if_stmt        = "if" expr block [ "else" ( if_stmt | block ) ]
                | "if" "let" pattern "=" expr block [ "else" block ] ;  (* desugars to match; see #704, #891 *)
 match_stmt     = "match" expr "{" { match_arm } "}" ;
-match_arm      = pattern [ "if" guard_expr ] "=>" ( expr | block ) "," ;
+match_arm      = pattern [ "if" guard_expr ] "=>" ( expr | block ) [ "," ] ;
+                 (* comma is a separator between arms; trailing comma is optional *)
 guard_expr     = ref_expr ;              (* guard pattern — uses refinement expression language; see #938 *)
 for_stmt       = "for" pattern "in" expr block ;
 while_stmt     = "while" expr
@@ -190,17 +195,20 @@ decreases_expr  = "decreases" ref_expr ;           (* Phase 5, #628 — named fo
 expr_stmt      = expr ";" ;
 
 (* === Expressions === *)
+(* `declassify(e)` and `sanitize(e)` were removed under #894 — use            *)
+(* `relabel name(e, "TAG")` (see `relabel_expr` above) with a declared         *)
+(* transition instead.                                                         *)
 expr           = literal | IDENT | field_access | fn_call | method_call
                | unary_expr | binary_expr | borrow_expr | if_expr | match_expr
                | lambda | block_expr | propagate | construct
                | "consume" expr | as_expr
-               | "declassify" "(" expr ")" | "sanitize" "(" expr ")"
                | actor_create_expr | select_expr | relabel_expr ;
 as_expr        = expr "as" type_expr ;                   (* checked coercion — runtime refinement check if unproven *)
 (* Phase 8, #63: actor creation — `actor TypeName { field: expr, … }` — returns ActorRef *)
 actor_create_expr = "actor" IDENT "{" [ actor_field_init { "," actor_field_init } ] "}" ;
 actor_field_init  = IDENT ":" expr ;
-(* Phase 8, #69: select — waits on the first ready arm; at most one timeout arm allowed *)
+(* Phase 8, #69: select — waits on the first ready arm; at most one timeout arm allowed. *)
+(* Note: `timeout` is a *contextual* identifier inside a select arm, NOT a reserved word. *)
 select_expr    = "select" "{" { select_arm } "}" ;
 select_arm     = [ IDENT "=" ] expr "=>" block    (* regular arm; optional result binding *)
                | "timeout" "(" expr ")" "=>" block ; (* timeout arm — fires after duration *)
@@ -295,4 +303,4 @@ DIGIT          = "0"..."9" ;
 - [Language Reference](../docs/reference.md) — informal prose reference
 - [ADR-0005](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0005-recursive-descent-parser.md) — the recursive descent decision
 - [ADR-0053](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0053-no-trait-bounds.md) — why `where` is refinements-only, never trait bounds
-- [tree-sitter grammar](https://github.com/mvl-lang/mvl/blob/main/etc/tree-sitter-mvl/grammar.js) — hand-translated for editor tooling
+- [tree-sitter grammar](https://github.com/mvl-lang/mvl-spec/blob/main/tools/tree-sitter/grammar.js) — hand-translated for editor tooling
