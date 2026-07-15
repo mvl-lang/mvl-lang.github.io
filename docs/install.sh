@@ -162,8 +162,12 @@ resolve_version() {
     return 0
   fi
 
-  # 1. HTML redirect — the reliable path
-  EFFECTIVE=$(curl -fsSL --max-time 5 -o /dev/null -w '%{url_effective}' \
+  # 1. HTML redirect — the reliable path.
+  #    --proto '=https' — refuse any non-HTTPS URL (defence against
+  #                       a redirect chain that downgrades to http)
+  #    --tlsv1.2         — reject TLS 1.0/1.1 (block downgrade attacks)
+  EFFECTIVE=$(curl -fsSL --proto '=https' --tlsv1.2 --max-time 5 \
+    -o /dev/null -w '%{url_effective}' \
     "https://github.com/${MVL_REPO}/releases/latest" 2>/dev/null)
   case "$EFFECTIVE" in
     */tag/*)
@@ -175,7 +179,7 @@ resolve_version() {
   # 2. Authenticated API fallback — useful if HTML is blocked by a
   #    proxy but the API is allowed, and the user has a token.
   if [ -n "${GITHUB_TOKEN:-}" ]; then
-    curl -fsSL --max-time 5 \
+    curl -fsSL --proto '=https' --tlsv1.2 --max-time 5 \
       -H "Authorization: Bearer ${GITHUB_TOKEN}" \
       "https://api.github.com/repos/${MVL_REPO}/releases/latest" 2>/dev/null \
       | grep -m1 '"tag_name"' \
