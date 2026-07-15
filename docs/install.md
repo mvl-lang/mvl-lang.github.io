@@ -68,49 +68,23 @@ Prerequisites:
 
 Exit code is non-zero if anything is missing, so it composes with CI/scripting. Nothing is written to disk in check mode.
 
-### Verify the script before running
+### Read the script before running
 
-For security-conscious users who want to inspect or checksum the install script before running it:
+If you want to inspect the source before executing it:
 
 ```bash
-# Download to a file instead of piping to sh
-curl -fsSL https://mvl-lang.org/install.sh       -o /tmp/mvl-install.sh
-curl -fsSL https://mvl-lang.org/install.sh.sha256 -o /tmp/mvl-install.sh.sha256
-
-# Verify the checksum
-( cd /tmp && shasum -a 256 -c mvl-install.sh.sha256 )
-# → mvl-install.sh: OK
-
-# Read the source (260-ish lines of POSIX sh)
-less /tmp/mvl-install.sh
-
-# Run when satisfied
-sh /tmp/mvl-install.sh
+curl -fsSL https://mvl-lang.org/install.sh -o /tmp/mvl-install.sh
+less /tmp/mvl-install.sh    # ~260 lines of POSIX sh
+sh /tmp/mvl-install.sh      # run when satisfied
 ```
 
-The sidecar `install.sh.sha256` is regenerated whenever `install.sh` changes and published from the same site.
+### Security note — pick your install path deliberately
 
-### Trust chain — what protects against MITM
+The install script is a **convenience** path. It's protected by HTTPS transport and the trust chain of git/cargo once cloning starts, but there's no cryptographic signature on the script itself. If `mvl-lang.org` is compromised, `curl | sh` is compromised.
 
-The install path is protected by several independent layers:
+For deployments where install-time integrity matters, use the **[Homebrew tap](https://github.com/mvl-lang/homebrew-mvl)** instead: every artifact SHA is pinned in the formula, changes go through PR review, and Homebrew verifies checksums before installing. That's the real-integrity path.
 
-| Layer | Where | What it defends |
-|-------|-------|-----------------|
-| **HTTPS + system CA validation** | curl connects to `mvl-lang.org`, `github.com`, `sh.rustup.rs` | Passive interception; forged endpoints |
-| **`--proto '=https' --tlsv1.2`** | All curl calls in the script | TLS downgrade attacks; unencrypted redirect chains |
-| **Certificate Transparency** | GitHub, most CAs | Detects rogue certs issued for github.com |
-| **`install.sh.sha256`** | Published alongside `install.sh` | Tampering with the script in transit or on the site |
-| **Git content-addressed SHAs** | `git clone` and `git checkout` | Tampering with source code after clone (git verifies every object) |
-| **`Cargo.lock`** | Present in the `mvl-lang/mvl` repo | Tampering with Rust dependencies (cargo verifies every crate SHA) |
-| **Homebrew formula SHA256s** | For users on the [tap](https://github.com/mvl-lang/homebrew-mvl) | Tampering with the release binary or stdlib tarballs |
-
-**What's NOT yet in place** (candidate for future hardening):
-
-- **GPG-signed release tags** — anyone with GitHub write access could rewrite a tag today. Signing tags with a project key would let you verify tag integrity independent of GitHub's own controls.
-- **Sigstore / cosign for release artifacts** — modern replacement for GPG signing; publishes signatures to a public transparency log. Not yet on our release pipeline.
-- **Reproducible-build attestations** — proving that the binary you download was actually built from the source tag it claims. This is a Phase 9 / DO-178C certification concern more than a general-user concern.
-
-If you're deploying MVL into a safety-critical environment where the above matters, use the [Homebrew tap](https://github.com/mvl-lang/homebrew-mvl) (SHAs pinned in the formula, review-gated by tap PRs) rather than `curl | sh`.
+Sigstore / cosign-signed release artifacts are a planned future improvement for the compiler releases themselves.
 
 ### System prerequisites
 
