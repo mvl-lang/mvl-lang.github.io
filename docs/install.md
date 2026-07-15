@@ -1,6 +1,34 @@
 # Install MVL
 
-## Quick Install
+## Homebrew (macOS Apple Silicon)
+
+Fastest path — installs a pre-built binary in seconds:
+
+```bash
+brew tap mvl-lang/mvl
+brew install mvl
+```
+
+Verify:
+
+```bash
+mvl --version    # → mvl 1.0.0
+mvl --help
+```
+
+The Homebrew formula installs the compiler binary, standard library, and Rust FFI runtime. `MVL_HOME` is configured automatically by a wrapper in `bin/mvl`. See [`mvl-lang/homebrew-mvl`](https://github.com/mvl-lang/homebrew-mvl) for what the tap ships and how to update it.
+
+Platforms currently supported by the tap:
+
+| Platform | Status |
+|----------|--------|
+| macOS on Apple Silicon (arm64) | ✅ Prebuilt binary |
+| macOS on Intel (x86_64) | ⏳ Coming — use the install script below |
+| Linux / Windows / other | ⏳ Coming — use the install script below |
+
+## Universal install script (build from source)
+
+Works on any platform with Rust:
 
 ```bash
 curl -fsSL https://mvl-lang.org/install.sh | sh
