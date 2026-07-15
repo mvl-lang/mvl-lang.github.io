@@ -133,6 +133,22 @@ install_rust() {
   ok "Rust installed"
 }
 
+# Resolve MVL_VERSION to a concrete tag.  For explicit tags, echo as-is.
+# For "latest", query the GitHub Releases API — this matches what the
+# GitHub UI calls "Latest release", which is what humans mean by
+# "latest".  Returns empty on network failure; caller must handle the
+# fallback.  Uses --max-time 5 so a dead API can't hang the install.
+resolve_version() {
+  if [ "$MVL_VERSION" != "latest" ]; then
+    printf '%s' "$MVL_VERSION"
+    return 0
+  fi
+  API_URL="https://api.github.com/repos/${MVL_REPO}/releases/latest"
+  curl -fsSL --max-time 5 "$API_URL" 2>/dev/null \
+    | grep -m1 '"tag_name"' \
+    | sed -E 's/.*"tag_name" *: *"([^"]+)".*/\1/'
+}
+
 check_git() {
   if command -v git >/dev/null 2>&1; then
     ok "git found: $(command -v git)"
@@ -208,10 +224,16 @@ fetch_source() {
     cd "$MVL_BUILD_DIR"
   fi
 
-  # Checkout specific version or latest release
+  # Checkout specific version or latest release.  Prefer the GitHub
+  # Releases API's "Latest" tag over `git describe` — commit distance
+  # is not the same as GitHub's release marker, and Kim's install
+  # picked the wrong one in the past.  Fall back to git describe if
+  # the API is unreachable.
   if [ "$MVL_VERSION" = "latest" ]; then
-    # Get the latest release tag
-    LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    LATEST_TAG=$(resolve_version)
+    if [ -z "$LATEST_TAG" ]; then
+      LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    fi
     if [ -n "$LATEST_TAG" ]; then
       git checkout --quiet "$LATEST_TAG"
       ok "Using release: $LATEST_TAG"
@@ -298,9 +320,25 @@ main() {
   info "Detected platform: ${TARGET}"
   printf "\n"
 
-  # --check mode: run all prerequisite checks, report status, exit.
+  # --check mode: report install plan + prereq status, then exit.
   # Nothing on disk is touched.  Non-zero exit iff any prereq missing.
   if [ "$CHECK_ONLY" = "1" ]; then
+    RESOLVED_VERSION=$(resolve_version)
+    if [ -z "$RESOLVED_VERSION" ]; then
+      DISPLAY_VERSION="latest (couldn't reach GitHub API — will resolve via git after clone)"
+    elif [ "$MVL_VERSION" = "latest" ]; then
+      DISPLAY_VERSION="$RESOLVED_VERSION (resolved from GitHub Releases 'Latest')"
+    else
+      DISPLAY_VERSION="$RESOLVED_VERSION (explicit MVL_VERSION)"
+    fi
+
+    printf "${BOLD}Install plan:${RESET}\n"
+    printf "  Version:     %s\n" "$DISPLAY_VERSION"
+    printf "  Source:      https://github.com/%s\n" "$MVL_REPO"
+    printf "  Build in:    %s\n" "$MVL_BUILD_DIR"
+    printf "  Install to:  %s/mvl\n" "$MVL_INSTALL_DIR"
+    printf "\n"
+
     printf "${BOLD}Prerequisites:${RESET}\n"
     MISSING=0
     check_git  || MISSING=$((MISSING + 1))
