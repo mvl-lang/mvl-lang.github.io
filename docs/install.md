@@ -52,14 +52,14 @@ No sudo required.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MVL_INSTALL_DIR` | `~/.local/bin` | Where to install the binary |
-| `MVL_VERSION` | `latest` | Version/tag to build (e.g., `v0.197.1`) |
+| `MVL_VERSION` | `latest` | Version/tag to build (e.g., `v1.0.0`) |
 | `MVL_BUILD_DIR` | `~/.mvl/src` | Where to clone source |
 | `MVL_NO_MODIFY_PATH` | `0` | Set to `1` to skip PATH modification |
 
 Example: install a specific version to a custom location:
 
 ```bash
-MVL_VERSION=v0.197.1 MVL_INSTALL_DIR=/opt/mvl/bin \
+MVL_VERSION=v1.0.0 MVL_INSTALL_DIR=/opt/mvl/bin \
   curl -fsSL https://mvl-lang.org/install.sh | sh
 ```
 
@@ -78,7 +78,7 @@ cp target/release/mvl ~/.local/bin/
 
 ```bash
 mvl --version
-# mvl 0.161.1
+# mvl 1.0.0
 ```
 
 ## Editor Support
