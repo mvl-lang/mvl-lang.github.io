@@ -104,14 +104,25 @@ type PositiveInt = Int where self > 0
 Effects are declared in function signatures with `!`. Callers must declare every effect their callees use — nothing is hidden.
 
 ```rust
-fn read_config(path: String) -> Result[Config, IoError] ! FileRead {
-    let raw: String = read_file(path)?;   // ? propagates the error
-    parse_config(raw)
+use std.io.{read_file, IoError}
+use std.ifc.{Tainted, trust}
+
+type Config = struct { host: String }
+
+fn parse_config(raw: String) -> Result[Config, IoError] {
+    Ok(Config { host: raw.trim() })   // stub — real impl parses TOML/JSON/etc.
 }
 
-fn main() -> Unit ! Console + FileRead {
+fn read_config(path: String) -> Result[Config, IoError] ! FileRead {
+    let raw: Tainted[String] = read_file(path)?;   // ? propagates the error
+    let text: String = relabel trust(raw, "CONFIG-FILE");
+    parse_config(text)
+}
+
+fn main() -> Result[Unit, IoError] ! Console + FileRead {
     let cfg: Config = read_config("app.toml")?;
-    println(cfg.host)
+    println(cfg.host);
+    Ok(())
 }
 ```
 

@@ -104,17 +104,21 @@ fn main() -> Unit ! Console {
 Try breaking it:
 
 ```rust
+fn double(x: Int where x > 0) -> Int where self > 0 {
+    x * 2
+}
+
 fn main() -> Unit ! Console {
     let result: Int = double(-1);  // compile error!
 }
 ```
 
 ```
-error[REQ10]: refinement violated
-  --> example.mvl:7:30
-   |
-7  |     let result: Int = double(-1);
-   |                              ^^ value -1 does not satisfy `x > 0`
+error[REQ10]: refinement predicate violated
+ --> example.mvl:6:23
+  |
+6 |     let result: Int = double(-1);
+  |                       ^^^^^^^^^^ argument to `double` violates refinement `self > 0`
 ```
 
 The compiler **proves** it at compile time. No runtime check needed.

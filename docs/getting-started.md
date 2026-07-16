@@ -47,7 +47,7 @@ The compiler **proves** at compile time that:
 - The return value satisfies `self > 0` (return refinement)
 - `result` is always positive — no runtime check needed
 
-Try breaking it:
+Try breaking it — replace the body of `main` with:
 
 ```rust
 fn main() -> Unit ! Console {
@@ -56,11 +56,11 @@ fn main() -> Unit ! Console {
 ```
 
 ```
-error[REQ10]: refinement violated
-  --> positive.mvl:7:30
-   |
-7  |     let result: Int = double(-1);
-   |                              ^^ value -1 does not satisfy `x > 0`
+error[REQ10]: refinement predicate violated
+ --> positive.mvl:6:23
+  |
+6 |     let result: Int = double(-1);
+  |                       ^^^^^^^^^^ argument to `double` violates refinement `self > 0`
 ```
 
 ## Assurance Report
@@ -76,178 +76,135 @@ This generates a verification report showing which requirements were proven, how
 This example demonstrates 7 of MVL's 11 compile-time requirements in a realistic banking scenario:
 
 ```rust
-// MVL example demonstrating 7 of the 11 compile-time requirements
+// MVL example demonstrating 7 of the 11 compile-time requirements.
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-label Secret;  // IFC label for sensitive data
-
-type Account = struct {
-    id: Secret[String],
-    balance: Int where balance >= 0,
-}
+use std.ifc.{Secret, classify, release}
+use std.log.{Logger, default_logger}
 
 // ── Core functions ────────────────────────────────────────────────────────────
 
-/// Withdraw funds from an account — returns remaining balance.
-/// 
-/// Requirements proven:
-///   - Req 10 (Refinements): amount > 0, balance >= amount
-///   - Req 11 (IFC): account_id is Secret, cannot leak to Console
-///   - Req 9 (Effects): declares ! Console for logging
-///   - Req 8 (Totality): partial — may fail if balance insufficient
-///   - Req 3 (No Null): returns Option, not nullable
+/// Withdraw funds — returns remaining balance, or None if insufficient.
 ///
+/// Requirements proven:
+///   - Req 10 (Refinements): amount > 0, balance >= 0 enforced at every call
+///   - Req 8 (Totality): partial — may return None
+///   - Req 4 (No Null): returns Option, not nullable
 partial fn withdraw(
-    account_id: Secret[String],
-    balance: Int where balance >= 0,
-    amount: Int where amount > 0
-) -> Option[Int] ! Console {
+    balance: Int where self >= 0,
+    amount:  Int where self > 0,
+) -> Option[Int] {
     if balance < amount {
-        log_info("Insufficient funds")  // OK: no secret in message
-        // log_info(account_id)         // REJECTED: Secret cannot flow to Console
         None
     } else {
-        let remaining: Int = balance - amount;
-        // Compiler proves: remaining >= 0 (from balance >= amount)
-        Some(remaining)
+        // Compiler proves: remaining >= 0 (from balance >= amount).
+        Some(balance - amount)
     }
 }
 
-/// Transfer between accounts — orchestrates withdrawal.
+/// Transfer between accounts. Because `withdraw` is `partial`, so is `transfer`.
 ///
 /// Requirements proven:
-///   - Req 8 (Totality): total — always terminates, no unbounded loops
-///   - Req 10 (Refinements): transfer_amount > 0 propagates to withdraw
-///   - Req 6 (Ownership): from/to are consumed, not aliased
-///
-total fn transfer(
-    from: Secret[String],
-    to: Secret[String],
-    from_balance: Int where from_balance >= 0,
-    transfer_amount: Int where transfer_amount > 0
-) -> Result[Int, String] ! Console {
-    match withdraw(from, from_balance, transfer_amount) {
+///   - Req 5 (Error visibility): every failure mode lives in the return type
+partial fn transfer(
+    from_balance:    Int where self >= 0,
+    transfer_amount: Int where self > 0,
+) -> Result[Int, String] {
+    match withdraw(from_balance, transfer_amount) {
         Some(new_balance) => Ok(new_balance),
-        None => Err("Transfer failed: insufficient funds")
+        None              => Err("Transfer failed: insufficient funds"),
     }
-    // Compiler proves termination: no recursion, no loops, finite match
 }
 
-// ── Loops: partial (while) vs total (for) ─────────────────────────────────────
+// ── Loops: partial (while) vs total (while ... decreases) ─────────────────────
 
-/// Count transactions until balance is exhausted — partial, may not terminate.
-///
-/// Requirements proven:
-///   - Req 8 (Totality): partial — while loop has no guaranteed bound
-///   - Req 10 (Refinements): deduction > 0 ensures progress
-///
+/// Count transactions until the balance is exhausted — partial, no proven bound.
 partial fn count_until_exhausted(
-    balance: Int where balance >= 0,
-    deduction: Int where deduction > 0
-) -> Int ! Console {
-    let mut remaining: Int = balance;
-    let mut count: Int = 0;
-    
+    balance:   Int where self >= 0,
+    deduction: Int where self > 0,
+) -> Int {
+    let remaining: ref Int = balance;
+    let count:     ref Int = 0;
     while remaining >= deduction {
         remaining = remaining - deduction;
-        count = count + 1;
-        // Compiler cannot prove termination — deduction could be modified
-        // (in general case), so this requires `partial`
+        count     = count + 1;
     }
-    
-    log_info("Transactions counted: " + count.to_string());
     count
 }
 
-/// Sum the first n transaction amounts — total, guaranteed termination.
+/// Sum the first n transaction amounts — total, guaranteed to terminate.
 ///
 /// Requirements proven:
-///   - Req 8 (Totality): total — for loop over finite range
-///   - Req 10 (Refinements): n >= 0 ensures valid range
-///   - Req 5 (Bounds): list access within bounds (via for-in)
-///
+///   - Req 8 (Totality): the `decreases n - i` clause proves termination
 total fn sum_transactions(
     amounts: List[Int],
-    n: Int where n >= 0 && n <= amounts.len()
+    n:       Int where self >= 0,
 ) -> Int {
-    let mut total: Int = 0;
-    
-    for i in 0..n {
-        // Compiler proves: i < n <= amounts.len(), so amounts[i] is safe
-        total = total + amounts[i];
+    let sum: ref Int = 0;
+    let i:   ref Int = 0;
+    while i < n decreases n - i {
+        sum = sum + amounts.get(i).unwrap_or(0);
+        i   = i + 1;
     }
-    decreases n - i  // termination proof: distance to n shrinks each iteration
-    
-    total
+    sum
 }
 
-// ── Relabeling: controlled secret disclosure ──────────────────────────────────
+// ── Information Flow Control: audited disclosure of a Secret ──────────────────
 
-/// Mask account ID for safe logging — last 4 chars only.
+/// Mask an account ID for safe logging — keeps the last 4 characters only.
 ///
 /// Requirements proven:
-///   - Req 11 (IFC): relabel trust() crosses the Secret boundary
-///   - Audit trail: "masked_for_logging" recorded in assurance report
-///
+///   - Req 11 (IFC): `relabel release` crosses the Secret → bare boundary,
+///     with an audit tag recorded in the assurance report.
 total fn mask_account_id(account_id: Secret[String]) -> String {
-    let id: String = relabel trust(account_id, "masked_for_logging");
-    // After relabel: id is now String (not Secret[String])
-    // The audit tag "masked_for_logging" appears in the assurance report
-    
-    let len: Int = id.len();
-    if len <= 4 {
+    let id: String = relabel release(account_id, "MASKED-FOR-LOGGING");
+    let n:  Int    = id.len();
+    if n <= 4 {
         "****"
     } else {
-        "****" + id.slice(len - 4, len)
+        "****".concat(id.substring(n - 4, n))
     }
 }
 
-/// Log account activity safely — masks the secret before output.
-///
+/// Log account activity safely — masks the secret before the log call.
 total fn log_account_activity(
     account_id: Secret[String],
-    action: String
-) -> Unit ! Console {
+    action: String,
+) -> Unit ! Log {
     let masked: String = mask_account_id(account_id);
-    log_info(action + " for account " + masked);  // OK: masked is not Secret
+    let logger: Logger = default_logger();
+    logger.info(action, {"account": masked})
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-/// Entry point — demonstrates the banking operations.
-///
-partial fn main() -> Unit ! Console {
-    // Create accounts with secret IDs
-    let alice_id: Secret[String] = Secret("ACCT-1234-5678-9012");
-    let bob_id: Secret[String] = Secret("ACCT-9876-5432-1098");
-    let alice_balance: Int = 1000;
-    
-    // Log activity with masked account ID (safe — uses relabel)
+partial fn main() -> Unit ! Log {
+    // `relabel classify` audit-tags the ingestion of public data into a
+    // Secret label. The audit tag appears in the assurance report so every
+    // point where bare data becomes Secret is traceable.
+    let alice_id: Secret[String] = relabel classify("ACCT-1234-5678-9012", "ACCT-INGEST");
+    let bob_id:   Secret[String] = relabel classify("ACCT-9876-5432-1098", "ACCT-INGEST");
+
+    // Log activity with a masked account ID (safe — uses `relabel release`).
     log_account_activity(alice_id, "Withdrawal initiated");
-    
-    // Attempt withdrawal
-    match withdraw(alice_id, alice_balance, 250) {
-        Some(remaining) => {
-            log_info("Withdrawal successful, remaining: " + remaining.to_string());
-            
-            // Transfer to Bob
-            match transfer(alice_id, bob_id, remaining, 100) {
-                Ok(final_balance) => {
-                    log_info("Transfer complete, final: " + final_balance.to_string());
-                    log_account_activity(bob_id, "Deposit received");
-                }
-                Err(msg) => log_error(msg)
-            }
-        }
-        None => log_error("Withdrawal failed")
-    }
-    
-    // Demonstrate loops
-    let tx_count: Int = count_until_exhausted(500, 75);  // partial: while loop
+    log_account_activity(bob_id,   "Awaiting deposit");
+
+    // Business logic on non-Secret data — no implicit flow into logging.
+    let alice_balance: Int = 1000;
+    let tx_count:      Int = count_until_exhausted(500, 75);   // partial: no proven bound
     let amounts: List[Int] = [10, 20, 30, 40, 50];
-    let total: Int = sum_transactions(amounts, 3);       // total: for loop
-    log_info("Sum of first 3: " + total.to_string());
+    let sum:           Int = sum_transactions(amounts, 3);     // total: `decreases` proves termination
+
+    let logger: Logger = default_logger();
+    logger.info("Batch summary", {
+        "balance":  alice_balance.to_string(),
+        "tx_count": tx_count.to_string(),
+        "sum":      sum.to_string(),
+    });
+
+    match transfer(alice_balance, 100) {
+        Ok(final_balance) => logger.info("Transfer complete", {"final": final_balance.to_string()}),
+        Err(msg)          => logger.error(msg, {"reason": "insufficient"}),
+    }
 }
 ```
 

@@ -9,27 +9,31 @@ These examples are drawn from the MVL corpus and test suite. Each demonstrates a
 Requirements 1 and 3 — algebraic data types and exhaustive match.
 
 ```rust
+type Attempts = Int where self >= 0
+
 type AuthError = enum {
     NotFound,
     InvalidPassword,
-    AccountLocked { attempts: Int where self >= 0 },
+    AccountLocked(Attempts),
     TokenExpired,
 }
 
 total fn error_message(e: AuthError) -> String {
     match e {
-        NotFound          => "user not found",
-        InvalidPassword   => "wrong password",
-        AccountLocked { attempts } =>
-            "locked after ".concat(attempts.to_string()).concat(" attempts"),
-        TokenExpired      => "token expired",
+        AuthError::NotFound          => "user not found",
+        AuthError::InvalidPassword   => "wrong password",
+        AuthError::AccountLocked(attempts) => {
+            let n: Int = attempts;
+            "locked after ".concat(n.to_string()).concat(" attempts")
+        },
+        AuthError::TokenExpired      => "token expired",
     }
     // Adding a fifth variant to AuthError causes a compile error here.
     // The compiler forces every variant to be handled explicitly.
 }
 ```
 
-The `AccountLocked` variant carries a field with a refinement — `attempts >= 0` is enforced at construction. You cannot create an `AccountLocked { attempts: -1 }`.
+The `Attempts` type is `Int where self >= 0` — a refinement enforced at construction. You cannot pass `-1` to `AuthError::AccountLocked`; the compiler rejects it.
 
 ---
 
@@ -39,24 +43,26 @@ Requirements 4 and 5 — `Option[T]` and `Result[T, E]`.
 
 ```rust
 use std.io.{read_file, IoError}
+use std.ifc.{Tainted, trust}
 
 fn parse_port(s: String) -> Option[Int] {
     match s.parse_int() {
-        None    => None,
-        Some(n) => if n > 0 && n < 65536 { Some(n) } else { None },
+        Ok(n)   => if n > 0 && n < 65536 { Some(n) } else { None },
+        Err(_)  => None,
     }
 }
 
 partial fn load_config(path: String) -> Result[Int, IoError] ! FileRead {
-    let raw: String = read_file(path)?;   // ? propagates IoError up
-    match parse_port(raw.trim()) {
+    let raw: Tainted[String] = read_file(path)?;      // ? propagates IoError up
+    let text: String = relabel trust(raw, "CONFIG-FILE");
+    match parse_port(text.trim()) {
         Some(port) => Ok(port),
-        None       => Err(IoError::InvalidData("invalid port number")),
+        None       => Err(IoError::Other("invalid port number")),
     }
 }
 ```
 
-`read_file` returns `Result[String, IoError]` — you cannot use the value without handling the error. The `?` operator propagates the error and requires `! FileRead` in the caller's signature.
+`read_file` returns `Result[Tainted[String], IoError]` — you cannot use the value without handling both the I/O error *and* the Tainted label. The `?` operator propagates the error; `relabel trust` releases the Tainted with an audit tag that appears in the assurance report.
 
 ---
 
@@ -65,6 +71,9 @@ partial fn load_config(path: String) -> Result[Int, IoError] ! FileRead {
 Requirement 7 — effects are declared in signatures, not hidden.
 
 ```rust
+use std.io.{read_file, IoError}
+use std.ifc.{Tainted, trust}
+
 // Pure function — no effects, provably free of side effects
 total fn celsius_to_fahrenheit(c: Float) -> Float {
     c * 1.8 + 32.0
@@ -77,16 +86,17 @@ fn print_temperature(c: Float) -> Unit ! Console {
 }
 
 // Has both Console and FileRead — both must be declared
-partial fn report_temperature(path: String) -> Unit ! Console + FileRead {
-    let raw: String = read_file(path)?;
-    match raw.trim().parse_float() {
-        None    => println("invalid temperature"),
-        Some(c) => print_temperature(c),
+partial fn report_temperature(path: String) -> Result[Unit, IoError] ! Console + FileRead {
+    let raw: Tainted[String] = read_file(path)?;
+    let text: String = relabel trust(raw, "TEMP-FILE");
+    match text.trim().parse_float() {
+        Err(_) => { println("invalid temperature"); Ok(()) },
+        Ok(c)  => { print_temperature(c); Ok(()) },
     }
 }
 ```
 
-The compiler rejects a function that calls `println` but does not declare `! Console`. Effects propagate upward — every caller of an effectful function must declare that effect.
+The compiler rejects a function that calls `println` but does not declare `! Console`. Effects propagate upward — every caller of an effectful function must declare each effect it inherits.
 
 ---
 
@@ -100,29 +110,29 @@ total fn factorial(n: Int where self >= 0) -> Int {
     if n <= 1 { 1 } else { n * factorial(n - 1) }
 }
 
-// total with explicit loop variant
+// total with an explicit loop variant
 total fn sum_list(xs: List[Int]) -> Int {
     let acc: ref Int = 0;
-    let i: ref Int = 0;
-    while i < xs.len() decreases xs.len() - i {
+    let i:   ref Int = 0;
+    let n:   Int     = xs.len();
+    while i < n decreases n - i {
         acc = acc + xs.get(i).unwrap_or(0);
-        i = i + 1;
+        i   = i + 1;
     }
     acc
 }
 
-// partial: while true loop — may not terminate, compiler accepts but does not prove
-partial fn server_loop(listener: TcpListener) -> Unit ! Net {
-    while true {
-        match tcp_accept(listener) {
-            Ok(stream)  => handle(stream),
-            Err(_)      => return,
-        }
+// partial: the loop count depends on runtime input, so termination is not proven
+partial fn count_down(start: Int) -> Int {
+    let x: ref Int = start;
+    while x > 0 {
+        x = x - 1;
     }
+    x
 }
 ```
 
-`decreases xs.len() - i` is the loop variant: the compiler verifies it strictly decreases on each iteration and is bounded below by zero.
+`decreases n - i` is the loop variant: the compiler verifies it strictly decreases on each iteration and is bounded below by zero. `count_down` omits the variant — MVL accepts it because it is declared `partial`, meaning termination is not proven.
 
 ---
 
@@ -135,21 +145,26 @@ type PositiveInt = Int where self > 0
 type Port        = Int where self > 0 && self < 65536
 
 total fn validate_port(p: Int) -> Option[Port] {
-    if p > 0 && p < 65536 { Some(p) } else { None }
+    if p > 0 && p < 65536 {
+        let port: Port = p;   // flow-sensitive: p is provably in-range here
+        Some(port)
+    } else {
+        None
+    }
 }
 
-// Compiler proves the literal 8080 satisfies Port's constraint
-let default_port: Port = 8080;
+fn main() -> Unit ! Console {
+    // Compiler proves the literal 8080 satisfies Port's constraint
+    let default_port: Port = 8080;
 
-// Compile error — -1 does not satisfy Port where self > 0
-// let bad_port: Port = -1;
+    // Compile error — -1 does not satisfy Port where self > 0
+    // let bad_port: Port = -1;
 
-fn connect(host: String, port: Port) -> Result[TcpStream, NetError] ! Net {
-    tcp_connect(host, port)  // port is statically known to be valid
+    println(default_port.to_string());
 }
 ```
 
-The layered solver (Layers 1–5: trivial, interval, symbolic, Cooper arithmetic, Z3 SMT) discharges most constraints at compile time. When static proof is not possible, a runtime check is inserted automatically and shown in `mvl prove`.
+The layered solver (Layers 1–5: literal, flow-sensitive, interval, Cooper arithmetic, Z3 SMT) discharges most constraints at compile time. When static proof is not possible, a runtime check is inserted automatically and logged in the assurance report.
 
 ---
 
@@ -158,33 +173,32 @@ The layered solver (Layers 1–5: trivial, interval, symbolic, Cooper arithmetic
 Requirement 11 — secret data cannot reach unauthorized sinks.
 
 ```rust
-use std.ifc.{Tainted, Secret}
+use std.ifc.{Tainted, Secret, trust, release}
+use std.log.{Logger, default_logger}
 
-// External input arrives as Tainted — cannot reach the database without validation
-partial fn handle_request(
-    raw_id: Tainted[String],
-    val db: SqliteDb,
-) -> Result[User, String] ! DB {
-    // Compile error: Tainted[String] cannot flow to DB without sanitization
-    // db_get_user(db, raw_id)
+type UserId = String
 
-    // Correct: sanitize first, then use
-    let id: String = relabel sanitize(raw_id, "id-validation");
-    db_get_user(db, id)
+// External input arrives as Tainted — cannot reach the DB without validation
+total fn validate_id(raw_id: Tainted[String]) -> UserId {
+    // Compile error would occur if we returned raw_id directly.
+    // Correct: release the Tainted with an audit tag after validation.
+    relabel trust(raw_id, "USER-ID-VALIDATE")
 }
 
-// Secret data cannot be logged without explicit declassification
+// Secret data cannot be logged without explicit declassification.
 fn log_masked_id(secret_id: Secret[String]) -> Unit ! Log {
-    // Compile error: Secret[String] cannot flow to Log
-    // logger.info("user", {"id": secret_id})
-
-    // Correct: declassify with an audit tag (recorded in the assurance report)
-    let last4: String = relabel trust(secret_id, "mask-for-logging");
-    logger.info("user", {"id_tail": last4})
+    // Compile error would occur here:
+    //   let logger: Logger = default_logger();
+    //   logger.info("user", {"id": secret_id})   // Secret cannot flow to Log
+    //
+    // Correct: release the Secret with an audit tag (assurance record).
+    let bare: String = relabel release(secret_id, "MASK-FOR-LOGGING");
+    let logger: Logger = default_logger();
+    logger.info("user", {"id_tail": bare})
 }
 ```
 
-Every `relabel` call with its audit tag appears in the assurance report — a complete inventory of every point where a trust boundary is crossed.
+Every `relabel` call carries an audit tag. Each call appears in the assurance report — a complete inventory of every point where a trust boundary is crossed. `trust` releases `Tainted → bare`; `release` releases `Secret → bare`; both require the audit tag.
 
 ---
 
@@ -194,38 +208,36 @@ Requirement 9 — no shared mutable state, no races.
 
 ```rust
 actor RequestCounter {
+    // Private mutable state — visible only inside this actor.
     total_requests: Int
-    by_route: Map[String, Int]
 
-    // pub fn = async behavior; parameters must be sendable (val / iso / value types)
-    pub fn record(val route: String) {
-        self.total_requests = self.total_requests + 1;
-        let prev: Int = self.by_route.get(route).unwrap_or(0);
-        self.by_route = self.by_route.insert(route, prev + 1);
+    // Private helper (synchronous, never called from outside).
+    fn log_count(n: Int) -> Unit ! Console {
+        println("total requests: ".concat(n.to_string()))
     }
 
-    pub fn snapshot() -> Map[String, Int] {
-        self.by_route
+    // Behavior (async message handler).
+    //   val route  — immutable String; safe to send across the mailbox boundary
+    //   Actor behaviors always return Unit — fire-and-forget.
+    pub fn record(val route: String) ! Console {
+        self.total_requests = self.total_requests + 1
+        log_count(self.total_requests)
     }
 }
 
-partial fn main() -> Unit ! Console + Spawn {
-    let counter: RequestCounter = spawn RequestCounter {
-        total_requests: 0,
-        by_route: Map[String, Int]::new(),
-    };
+fn main() -> Unit ! Console + Actor {
+    // `actor Name { fields }` creates and returns a handle to a fresh actor.
+    let counter: RequestCounter = actor RequestCounter { total_requests: 0 };
 
-    // Message sends — never direct field access
+    // Message sends — the calls return immediately; the actor's runtime
+    // serialises the mailbox so concurrent sends cannot race.
     counter.record("/users");
     counter.record("/users");
-    counter.record("/health");
-
-    let counts: Map[String, Int] = counter.snapshot();
-    println(counts.get("/users").unwrap_or(0).to_string())
+    counter.record("/health")
 }
 ```
 
-The actor's fields are accessible only through its methods. Concurrent senders cannot race — messages are serialised by the actor runtime. Requirement 9 is structural, not disciplinary.
+The actor's fields are accessible only through its behaviors. Behaviors are async and return `Unit` — you send a message, the actor processes it later. Concurrent senders cannot race because the mailbox serialises delivery. Requirement 9 is structural, not disciplinary.
 
 ---
 
@@ -234,72 +246,66 @@ The actor's fields are accessible only through its methods. Concurrent senders c
 Requirement 6 — resources used exactly once.
 
 ```rust
-partial fn process_file(path: String) -> Result[Unit, IoError] ! FileRead + FileWrite {
-    let file: FileHandle = open_file(path, FileMode::ReadWrite)?;
+use std.io.{open, close, write, Fd, IoError, Path}
 
-    // file is moved here — cannot use it again after this point
-    let contents: String = read_all(file)?;
+partial fn append_line(p: Path, line: String) -> Result[Unit, IoError] ! Console {
+    let fd: Fd = open(p)?;
 
-    // Compile error: file was already consumed by read_all
-    // close_file(file);
+    // write takes fd by value — after this call, fd is consumed.
+    let _: Result[Unit, IoError] = write(fd, line.concat("\n"));
 
-    // The compiler tracks that file was moved into read_all;
-    // read_all is responsible for closing it.
+    // Compile error: fd was already consumed by write.
+    // close(fd);
+
     Ok(())
 }
 ```
 
-`FileHandle` is a linear type. The compiler tracks every move. A file handle that reaches the end of its scope without being consumed is a compile error — no resource leak possible.
+`Fd` is passed by value: after `write(fd, ...)`, the compiler tracks that `fd` has moved and rejects any further use. A file descriptor that reaches the end of its scope without being consumed is a compile error — no resource leak possible.
 
 ---
 
 ## Layering requirements together
 
-A realistic HTTP handler using requirements 1, 4, 5, 7, 10, and 11 together:
+A small pipeline showing requirements 1, 5, 7, and 10 layered on top of each other. See [`mvl-lang/examples/crud_api`](https://github.com/mvl-lang/examples/tree/main/crud_api) for the full REST handler.
 
 ```rust
-use models::{User, CreateUserRequest}
-use pkg.rest.json.{json_ok_str, json_error, json_created_str,
-                   body_obj, json_field_string, http_bad_request}
+type CreateUserRequest = struct {
+    name:  String,
+    email: String,
+}
 
-pub partial fn create_user_handler(
-    val db:      SqliteDb,
-    val logger:  Logger,
-    val auditor: AuditLogger,
-    val req:     Request,
-) -> Response ! DB + Log + Audit {
-    // Parse body — returns Result, ? propagates the error response
-    let obj:   JsonObject = match body_obj(req) {
-        Err(e) => return json_error(e),
-        Ok(o)  => o,
-    };
-    let name:  String = match json_field_string(obj, "name") {
-        Err(e) => return json_error(e),
-        Ok(n)  => n,
-    };
-    let email: String = match json_field_string(obj, "email") {
-        Err(e) => return json_error(e),
-        Ok(e)  => e,
-    };
+type CreateError = enum {
+    ValidationFailed(String),
+    Conflict(String),
+}
 
-    // Create user — returns Result[Int, String]
-    match db_create_user(db, CreateUserRequest { name: name, email: email }) {
-        Err(msg) => {
-            let _: Result[Unit, IoError] = auditor.emit(deny("api", "users", msg));
-            json_error(http_bad_request(msg))
-        },
-        Ok(new_id) => {
-            logger.info("created", {"id": new_id.to_string()});
-            let _: Result[Unit, IoError] = auditor.emit(
-                modify("api", "user:".concat(new_id.to_string()), "create")
-            );
-            json_created_str(new_id.to_string())
-        },
+// Stubs for the demo — in real code these come from a DB package.
+fn validate(name: String, email: String) -> Result[CreateUserRequest, CreateError] {
+    if name.len() == 0 {
+        Err(CreateError::ValidationFailed("name required"))
+    } else {
+        if email.len() == 0 {
+            Err(CreateError::ValidationFailed("email required"))
+        } else {
+            Ok(CreateUserRequest { name: name, email: email })
+        }
     }
+}
+
+fn db_insert(req: CreateUserRequest) -> Result[Int, CreateError] {
+    Ok(42)   // stub — real impl talks to SQLite and can return Conflict
+}
+
+pub fn create_user(name: String, email: String) -> Result[Int, CreateError] ! Console {
+    let req: CreateUserRequest = validate(name, email)?;
+    let new_id: Int            = db_insert(req)?;
+    println("created id=".concat(new_id.to_string()));
+    Ok(new_id)
 }
 ```
 
-The compiler verifies: all error paths handled, effects declared, no null, no hidden I/O, no unchecked casts.
+The compiler verifies: all error paths handled (Requirement 5), effects declared (`! Console`, Requirement 7), no null (Requirement 4), and every enum variant matched (Requirement 3).
 
 ---
 
