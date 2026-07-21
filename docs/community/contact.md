@@ -4,7 +4,7 @@ For general questions, feature ideas, or bug reports, the best channels are:
 
 - :material-github: **GitHub Discussions** — [github.com/mvl-lang/mvl/discussions](https://github.com/mvl-lang/mvl/discussions/categories/announcements)
 - :material-bug: **GitHub Issues** — [github.com/mvl-lang/mvl/issues](https://github.com/mvl-lang/mvl/issues)
-- :simple-discord: **Discord** — `Lab271#mvl`, [join here](https://discord.com/channels/1529093562871054336/1529093620689539072)
+- :simple-discord: **Discord** — `Lab271#mvl`, [join here](https://discord.gg/BuWfh7A2A)
 
 ---
 
