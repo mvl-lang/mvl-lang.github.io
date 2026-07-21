@@ -64,6 +64,7 @@ nav:
   - Community:
     - Contributing: community/contributing.md
     - Roadmap: community/roadmap.md
+    - Contact: community/contact.md
 
 markdown_extensions:
   - admonition
