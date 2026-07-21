@@ -19,6 +19,12 @@ Schuberg Philis
 
 ---
 
+## Further Reading
+
+- :material-book-open-variant: **[stories.lab271.io](https://stories.lab271.io)** — long-form writing about MVL, verified languages, and building for the LLM age.
+
+---
+
 ## Contributing
 
 If you want to contribute code, tests, documentation, or examples, start with the [contributing guide](contributing.md).
