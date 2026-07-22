@@ -128,7 +128,7 @@ The compiler **proves** it at compile time. No runtime check needed.
 ## :material-forum: Join the community
 
 - :material-github: **GitHub Discussions** — announcements, Q&A, ideas: [github.com/mvl-lang/mvl/discussions](https://github.com/mvl-lang/mvl/discussions/categories/announcements)
-- :simple-discord: **Discord** — real-time chat in `Lab271#mvl`: [discord.com/channels/1529093562871054336/1529093620689539072](https://discord.com/channels/1529093562871054336/1529093620689539072)
+- :simple-discord: **Discord** — real-time chat in: [Lab271#mvl](https://discord.gg/BuWfh7A2A))
 
 Questions, feedback, or partnership inquiries? See the [contact page](community/contact.md).
 
