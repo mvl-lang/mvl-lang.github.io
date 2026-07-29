@@ -47,7 +47,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: mvl-lang/mvl-spec
-          path: ../mvl-spec
+          # Must live inside the workspace — actions/checkout rejects a path
+          # above it ("Repository path ... is not under ..."). Hence a
+          # dot-prefixed sibling directory rather than ../mvl-spec, and
+          # --spec-dir below rather than the script's sibling default.
+          path: .mvl-spec
 
       - name: Verify the published grammar matches the spec
         # docs/language/grammar.md embeds grammar/grammar.ebnf verbatim. It used
@@ -55,7 +59,7 @@ jobs:
         # 103, and it documented `forall x: T, pred` — unbounded quantifiers,
         # which the parser rejects (mvl#1915). Readers following the published
         # grammar got a compile error. See ADR-0060 (mvl-lang/mvl#2050).
-        run: python3 tools/gen_grammar_page.py --check --spec-dir ../mvl-spec
+        run: python3 tools/gen_grammar_page.py --check --spec-dir .mvl-spec
 
       - name: Build site
         run: mkdocs build
