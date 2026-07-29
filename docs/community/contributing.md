@@ -103,7 +103,7 @@ tests/corpus/
 
 Positive tests must parse and type-check. Negative tests (expected errors) are marked with a comment:
 
-```rust
+```mvl
 // corpus:expect-fail REQ10 refinement violated
 fn bad(x: Int where x > 0) -> Unit { bad(-1) }
 ```

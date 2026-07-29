@@ -155,7 +155,7 @@ cc -o hello hello.o -lc
 
 ## The Source Program
 
-```rust
+```mvl
 // examples/programs/hello_world.mvl
 // Simplest possible MVL program.
 // Exercises: Console effect (Req 7).

@@ -32,7 +32,7 @@ Each layer catches different failure modes. Use all five for critical systems.
 
 Internal test functions verify individual functions. They have access to private APIs and live alongside the code they test.
 
-```rust
+```mvl
 fn add(a: Int, b: Int) -> Int {
     a + b
 }
@@ -68,7 +68,7 @@ Running 3 tests...
 
 Tests in `*_test.mvl` files test only the public API. They survive code regeneration — when the implementation is regenerated from specs, external tests remain as permanent evidence.
 
-```rust
+```mvl
 // math_test.mvl — tests public API only
 use math.{add}
 
@@ -83,7 +83,7 @@ test fn test_add_public() -> Unit {
 
 Property tests verify invariants hold for *all* inputs, not just examples. MVL generates random inputs and searches for counterexamples.
 
-```rust
+```mvl
 use std.test.{property, forall}
 
 property fn add_commutative() -> Bool {
@@ -141,7 +141,7 @@ $ mvl test --property src/buggy.mvl
 
 Behavior-Driven Development scenarios express tests in Given-When-Then format, directly mapping to specifications.
 
-```rust
+```mvl
 use std.test.{scenario, given, when, then}
 
 scenario fn user_login() -> Unit {
@@ -183,7 +183,7 @@ Modified Condition/Decision Coverage is the most stringent structural coverage m
 
 MC/DC proves that every boolean condition independently affects the decision outcome.
 
-```rust
+```mvl
 fn authorize(is_admin: Bool, is_owner: Bool, is_public: Bool) -> Bool {
     is_admin || (is_owner && is_public)
 }
@@ -226,7 +226,7 @@ For safety-critical systems, branch coverage isn't enough. A function like `if a
 
 Fuzz testing generates random, malformed, and adversarial inputs to find crashes, hangs, and unexpected behavior. MVL's fuzzer is coverage-guided — it tracks which code paths inputs exercise and mutates toward unexplored paths.
 
-```rust
+```mvl
 use std.fuzz.{fuzz, FuzzInput}
 
 fuzz fn fuzz_parser(input: FuzzInput) -> Unit {

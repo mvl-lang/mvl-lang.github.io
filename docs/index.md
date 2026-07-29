@@ -24,7 +24,7 @@ curl -fsSL https://mvl-lang.org/install.sh | sh
 
 ## :material-rocket-launch: Hello, verified world
 
-```rust
+```mvl
 fn main() -> Unit ! Console {
     println("Hello, world!");
 }
@@ -90,7 +90,7 @@ LLMs can generate code effortlessly. They have semantic understanding of intent,
 
 ## :material-test-tube: A taste of verification
 
-```rust
+```mvl
 fn double(x: Int where x > 0) -> Int where self > 0 {
     x * 2
 }
@@ -103,7 +103,7 @@ fn main() -> Unit ! Console {
 
 Try breaking it:
 
-```rust
+```mvl
 fn double(x: Int where x > 0) -> Int where self > 0 {
     x * 2
 }

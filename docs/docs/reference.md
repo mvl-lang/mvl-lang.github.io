@@ -14,7 +14,7 @@ program = { use_decl } { declaration }
 
 ### Imports
 
-```rust
+```mvl
 use std.io.{read_file, write_file}
 use std.log.{Logger, log_info}
 use models                          // import whole module
@@ -25,7 +25,7 @@ Dot-separated paths. `::` is accepted but `.` is preferred. Braced lists import 
 
 ### Declarations
 
-```rust
+```mvl
 pub type   Name = ...         // type declaration (public or private)
 pub fn     name(...) -> T     // function declaration
     total fn / partial fn     // with explicit totality
@@ -68,7 +68,7 @@ extern "rust" { ... }         // foreign function declaration
 
 ### Composite Types
 
-```rust
+```mvl
 // Option — Some(v) or None
 Option[T]
 
@@ -89,7 +89,7 @@ type Port = Int where self > 0 && self < 65536
 
 A `where` clause attaches a solver-discharged predicate to a type:
 
-```rust
+```mvl
 type PositiveInt = Int where self > 0
 type NonEmpty    = String where len(self) > 0
 
@@ -114,7 +114,7 @@ fn sqrt(x: Float where self >= 0.0) -> Float { ... }
 
 ### IFC Label Types
 
-```rust
+```mvl
 Public[T]   // default; no label
 Tainted[T]  // from untrusted external input
 Secret[T]   // high-confidentiality data
@@ -124,7 +124,7 @@ Labels flow: `Tainted[String]` cannot be passed where `String` is expected witho
 
 ### Capability Types
 
-```rust
+```mvl
 val T   // borrowed, immutable (default for function parameters)
 ref T   // mutable reference
 iso T   // isolated — unique ownership, sendable to actors
@@ -132,7 +132,7 @@ iso T   // isolated — unique ownership, sendable to actors
 
 ### Function Types
 
-```rust
+```mvl
 fn(Int, Int) -> Int
 fn(String) -> Unit ! Console
 fn(T) -> Option[T]
@@ -142,7 +142,7 @@ fn(T) -> Option[T]
 
 ## Functions
 
-```rust
+```mvl
 [totality] fn name[TypeParams](params) -> ReturnType [! Effects] [contracts] { body }
 ```
 
@@ -156,7 +156,7 @@ fn(T) -> Option[T]
 
 ### Parameters
 
-```rust
+```mvl
 fn f(
     x: Int,                       // immutable value
     s: String where len(s) > 0,   // with inline refinement
@@ -167,19 +167,19 @@ fn f(
 
 ### Return Type with Refinement
 
-```rust
+```mvl
 fn parse_port(s: String) -> Int where self > 0 && self < 65536
 ```
 
 ### Effects
 
-```rust
+```mvl
 fn name() -> T ! EffectA + EffectB + EffectC
 ```
 
 ### Contracts
 
-```rust
+```mvl
 fn divide(a: Float, b: Float) -> Float
     requires b != 0.0
     ensures result * b == a
@@ -192,7 +192,7 @@ fn divide(a: Float, b: Float) -> Float
 
 ### Extension Methods
 
-```rust
+```mvl
 pub fn String::len(self) -> Int { ... }
 pub fn List[T]::is_empty(self) -> Bool { self.len() == 0 }
 ```
@@ -203,7 +203,7 @@ Called with dot syntax: `"hello".len()`, `xs.is_empty()`.
 
 ## Statements
 
-```rust
+```mvl
 let x: T = expr;           // immutable binding (type required)
 let x: ref T = expr;       // mutable binding
 x = expr;                  // assignment (only valid for ref bindings)
@@ -214,7 +214,7 @@ return;                     // return Unit
 
 The last expression in a block is the implicit return value — no semicolon:
 
-```rust
+```mvl
 fn double(n: Int) -> Int {
     let x: Int = n * 2;    // statement — semicolon
     x                       // return expression — no semicolon
@@ -223,7 +223,7 @@ fn double(n: Int) -> Int {
 
 ### Control Flow
 
-```rust
+```mvl
 // if — expression or statement
 let label: String = if score > 90 { "A" } else { "B" };
 
@@ -259,7 +259,7 @@ while true {
 
 ## Expressions
 
-```rust
+```mvl
 // Literals
 42        -7        3.14      true      false      'a'      "hello"
 
@@ -303,7 +303,7 @@ relabel sanitize(tainted_val, "validation-reason")
 
 ## Actors
 
-```rust
+```mvl
 actor Name {
     field: Type
     field: Type = default_value
@@ -344,7 +344,7 @@ a.behavior_name(arg);   // message send — async
 
 ### Effect Declarations
 
-```rust
+```mvl
 effect Clock                    // base effect
 effect Log > Clock              // Log subsumes Clock
 effect IO > Console + FileRead  // composite effect
@@ -354,7 +354,7 @@ A function declaring `! IO` implicitly declares `! Console + FileRead`.
 
 ### Parameterised Effects (path / host scoping)
 
-```rust
+```mvl
 fn read_config() -> Config ! FileRead("/etc/app/")
 fn call_api()   -> Response ! Net("api.example.com")
 fn read_only()  -> List[Row] ! DB("SELECT")
@@ -364,7 +364,7 @@ fn read_only()  -> List[Row] ! DB("SELECT")
 
 ## IFC Labels
 
-```rust
+```mvl
 // Label declarations
 label Secret;
 label Tainted;
@@ -411,7 +411,7 @@ Unproved predicates become runtime checks, visible in `mvl prove`.
 
 ## Extern Blocks
 
-```rust
+```mvl
 extern "rust" {
     fn random_bytes(n: Int) -> List[Byte] ! Random;
     fn sha256(data: List[Byte]) -> List[Byte];
@@ -428,7 +428,7 @@ Every `extern` block requires an `extern-rationale` in `mvl.toml`.
 
 ## Modules
 
-```rust
+```mvl
 // foo.mvl — module "foo"
 // foo/bar.mvl — module "foo.bar"
 
