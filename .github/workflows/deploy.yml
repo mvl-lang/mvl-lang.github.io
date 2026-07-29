@@ -3,6 +3,10 @@ name: Deploy docs to GitHub Pages
 on:
   push:
     branches: [main]
+  # PRs build and run the highlighting guards but do not deploy — see the
+  # condition on the `deploy` job. Without this, a broken docs build merges
+  # cleanly and only fails afterwards, on main, at deploy time.
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -81,6 +85,8 @@ jobs:
           path: site/
 
   deploy:
+    # Only main deploys. PRs stop after `build`, having run the guards.
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
