@@ -57,6 +57,7 @@ nav:
     - Language Reference: docs/reference.md
     - Standard Library: docs/stdlib.md
     - Extension Packages: docs/packages.md
+    - Editor Support & Tooling: docs/tooling.md
     - Assurance Report: docs/assurance.md
     - Bootstrapping: docs/bootstrapping.md
     - Self-Hosted Hello World: docs/self-hosted-hello.md

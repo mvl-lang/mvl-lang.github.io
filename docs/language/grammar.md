@@ -2,7 +2,9 @@
 
 The MVL grammar is **LL(1)** — every construct can be parsed with a single token of lookahead. This is a deliberate design choice ([ADR-0005](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0005-recursive-descent-parser.md)): the parser is hand-written recursive descent, no parser generator, no PEG, no macros. The whole grammar fits in ≈100 productions, small enough for a developer to hold in working memory.
 
-The grammar below is the **authoritative specification**. The Rust parser, the [tree-sitter grammar](https://github.com/mvl-lang/mvl-spec/blob/main/tools/tree-sitter/grammar.js), and any future MVL-in-MVL parser must all match it. `make test-grammar-coverage` verifies coverage against the corpus.
+[`grammar/grammar.ebnf`](https://github.com/mvl-lang/mvl-spec/blob/main/grammar/grammar.ebnf) in the `mvl-spec` repo is the **single source of truth**. The block below is embedded from it verbatim by `tools/gen_grammar_page.py`, and this site's build fails if the two disagree — so what you read here is what the spec says.
+
+The Rust parser, the [tree-sitter grammar](https://github.com/mvl-lang/tree-sitter-mvl), and the MVL-in-MVL parser must all match it. `make validate-keywords` and `make test-grammar-coverage` in the compiler repo verify that, and `tools/generators/check-drift.sh` in `mvl-spec` regenerates every downstream keyword table from this grammar on each PR.
 
 **Notation:** ISO 14977 Extended BNF.
 
@@ -14,11 +16,31 @@ The grammar below is the **authoritative specification**. The Rust parser, the [
 - `UPPER` — terminal token (see the *Lexical* section at the end)
 - `(* comment *)` — EBNF comment
 
-**Source of truth:** [`grammar/grammar.ebnf`](https://github.com/mvl-lang/mvl-spec/blob/main/grammar/grammar.ebnf) in the `mvl-spec` repo.
-
 ---
 
 ```ebnf
+(* ======================================================================== *)
+(* DO NOT EDIT. This block is embedded verbatim from mvl-spec                *)
+(* grammar/grammar.ebnf by tools/gen_grammar_page.py. Edit the grammar in    *)
+(* the mvl-spec repo, then run that script. deploy.yml fails on drift.       *)
+(* ======================================================================== *)
+
+(* MVL — Minimum Verification Language — Formal Grammar                         *)
+(* Notation: ISO 14977 Extended BNF                                              *)
+(*   rule  = body ;          production                                          *)
+(*   [ x ]                   optional                                            *)
+(*   { x }                   zero or more                                        *)
+(*   ( a | b )               alternation                                         *)
+(*   "lit"                   terminal string                                     *)
+(*   UPPER                   terminal token (defined in === Lexical === section) *)
+(*   (* comment *)           EBNF comment                                        *)
+(*                                                                               *)
+(* The grammar is LL(1) — see ADR-0005.                                          *)
+(* The tree-sitter grammar lives in its own repository (mvl-lang/tree-sitter-mvl,*)
+(* grammar.js at the root, per Zed's extension requirements) and is hand-        *)
+(* translated from this file.  Run `make test-grammar-coverage` to verify        *)
+(* coverage.                                                                     *)
+
 (* === Top-level === *)
 (* "pub" is factored out so each decl_body alternative starts with a     *)
 (* distinct keyword — this preserves the LL(1) property (ADR-0005).      *)
@@ -172,12 +194,12 @@ ref_atom       = IDENT { "." IDENT }                               (* field acce
                | INTEGER | FLOAT
                | "len" "(" IDENT ")"
                | "old" "(" ref_expr ")"                          (* Phase 4, #627 — entry-time value in ensures *)
-               | forall_expr                                      (* Phase 5, #628 — universal quantifier *)
-               | exists_expr                                      (* Phase 5, #628 — existential quantifier *)
+               | forall_expr                                      (* #1915 — bounded universal quantifier *)
+               | exists_expr                                      (* #1915 — bounded existential quantifier *)
                | "(" ref_expr ")" | "!" ref_atom
                | ref_atom ( "+" | "-" | "*" | "/" | "%" ) ref_atom ;
-forall_expr    = "forall" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
-exists_expr    = "exists" IDENT ":" type_expr "," ref_expr ; (* Phase 5, #628 *)
+forall_expr    = "forall" IDENT "in" "[" INTEGER ".." INTEGER "]" "." ref_expr ; (* #1915 — integer bounds only; unbounded `forall x: T,` is rejected by parser *)
+exists_expr    = "exists" IDENT "in" "[" INTEGER ".." INTEGER "]" "." ref_expr ; (* #1915 — integer bounds only; unbounded `exists x: T,` is rejected by parser *)
 
 (* === Statements === *)
 block          = "{" { statement } "}" ;
@@ -202,7 +224,7 @@ expr_stmt      = expr ";" ;
 
 (* === Expressions === *)
 (* `declassify(e)` and `sanitize(e)` were removed under #894 — use            *)
-(* `relabel name(e, "TAG")` (see `relabel_expr` above) with a declared         *)
+(* `relabel name(e, "TAG")` (see `relabel_expr` below) with a declared         *)
 (* transition instead.                                                         *)
 expr           = literal | IDENT | field_access | fn_call | method_call
                | unary_expr | binary_expr | borrow_expr | if_expr | match_expr
@@ -235,20 +257,29 @@ method_call    = expr "." IDENT "(" [ arg_list ] ")" ;
 field_access   = expr "." IDENT ;
 arg_list       = expr { "," expr } ;
 lambda         = "|" [ param_list ] "|" [ "->" type_expr ] expr ;
-construct      = IDENT "{" { IDENT ":" expr "," } "}" ;
+construct      = IDENT "{" [ field_init { "," field_init } [ "," ] ] "}" ;
+field_init     = IDENT ":" expr ;
 if_expr        = "if" expr block "else" block
                | "if" "let" pattern "=" expr block "else" block ;  (* desugars to match; see #891 *)
 match_expr     = "match" expr "{" { match_arm } "}" ;
 block_expr     = block ;
 
 (* === Patterns === *)
+(* `ctor_path` allows a single `::` segment in constructor / struct-pattern     *)
+(* heads so enum variants can be matched by their qualified name — e.g.        *)
+(* `match r { UpdateResult::Applied(t) => …, RejectReason::NotAuthorised => …} *)
+(* Nested constructor patterns (e.g. `Rejected(RejectReason::Foo)`) work by    *)
+(* recursion: each argument is itself a `pattern`.                              *)
 pattern        = base_pattern { "|" base_pattern } ;
 base_pattern   = "_" | IDENT | literal
-               | IDENT "(" [ pattern_list ] ")"
-               | IDENT "{" { IDENT ":" base_pattern "," } [ ".." ] "}"
+               | ctor_path "(" [ pattern_list ] ")"
+               | ctor_path "{" [ field_pattern { "," field_pattern } [ "," ] ] [ ".." ] "}"
+               | ctor_path                                       (* bare variant, no payload *)
                | "(" pattern "," pattern_list ")"
                | "Some" "(" pattern ")" | "None"
                | "Ok" "(" pattern ")" | "Err" "(" pattern ")" ;
+ctor_path      = IDENT [ "::" IDENT ] ;
+field_pattern  = IDENT ":" base_pattern ;
 pattern_list   = pattern { "," pattern } ;
 
 (* === Literals === *)
@@ -284,9 +315,56 @@ DOC_COMMENT    = "///" { ANY_CHAR } NEWLINE ;    (* doc comment — convention, 
 (* Ownership:       iso  val  ref  tag  consume                                  *)
 (* IFC:             label  relabel                                               *)
 (* Boolean:         true  false                                                  *)
-(* Refinements:     where  self  old  requires  ensures  invariant  with        *)
-(*                  decreases  forall  exists                                    *)
+(* Refinements:     where  requires  ensures  invariant  with  decreases        *)
+(*                  forall  exists                                               *)
 (* Pattern:         Some  None  Ok  Err                                          *)
+
+(* === Contextual Keywords === *)
+(* Special in ONE syntactic position and ordinary identifiers everywhere else.    *)
+(* The lexer does NOT reserve these — it emits IDENT and the parser disambiguates *)
+(* by position. Verified empirically: `let end: Int = 1;` compiles clean, and the *)
+(* same holds for each word below, whereas `let fn = 1;` is rejected.             *)
+(*                                                                               *)
+(* Consumers must anchor on the enclosing production, never match the bare word.  *)
+(* A flat keyword list highlights `let end = 5` as a keyword.                     *)
+(*                                                                               *)
+(* Contextual:      self  old  end  timeout  audit                                *)
+(*                                                                               *)
+(* Where each is valid:                                                           *)
+(*   self     refinement predicates — the value being refined. NOTE: appears in   *)
+(*            no production; it is named only in the prose above.                  *)
+(*   old      `ensures` only — see ref_atom, entry-time value                      *)
+(*   end      session types only — see session_op                                  *)
+(*   timeout  `select` arms only — see select_arm                                   *)
+(*   audit    trailing marker on relabel_decl / relabel_expr. NOTE: `audit` is     *)
+(*            also a stdlib module name (std/audit.mvl); the two do not collide    *)
+(*            because neither is reserved.                                         *)
+(*                                                                               *)
+(* NOT a keyword of any kind: `len`. It appears as a quoted terminal in ref_atom   *)
+(* because the refinement sub-grammar admits no arbitrary calls and must therefore *)
+(* enumerate the forms it allows. In ordinary code `len` is a compiler-known       *)
+(* method (`x.len()`, resolved in src/mvl/checker/method_types.rs); the            *)
+(* free-function form `len(x)` exists only inside a predicate. `let len = 5;` is   *)
+(* legal, so it is not reserved and not contextual.                                *)
+
+(* === Builtin Types === *)
+(* Reserved by convention only — the lexer does not protect them. Users should    *)
+(* not shadow them. `Option` and `Result` additionally appear as quoted terminals *)
+(* in option_type / result_type productions.                                      *)
+(*                                                                               *)
+(* Builtin types:   Int  Int8  Int16  Int32  Int64  UInt8  UInt16  UInt32        *)
+(*                  UInt64  Float  Float32  Float64  Bool  Char  Byte  String    *)
+(*                  Unit  Option  Result  List  Array  Map  Set                   *)
+
+(* === Stdlib IFC Labels === *)
+(* Ordinary identifiers, NOT reserved. Pre-seeded into the parser's known-label   *)
+(* set so `Tainted[T]` parses as a labeled_type without an explicit `label`       *)
+(* declaration. User code extends the set with `label Foo;`.                      *)
+(*                                                                               *)
+(* There is NO `Public` label — an unlabeled type is public by absence (see       *)
+(* labeled_type above). There is no `Clean` label either.                          *)
+(*                                                                               *)
+(* Stdlib labels:   Tainted  Secret  ConfigPath  DbUrl  ApiEndpoint  AuditTarget *)
 
 (* === Lexical === *)
 IDENT          = ALPHA { ALPHA | DIGIT | "_" } ;
@@ -309,4 +387,4 @@ DIGIT          = "0"..."9" ;
 - [Language Reference](../docs/reference.md) — informal prose reference
 - [ADR-0005](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0005-recursive-descent-parser.md) — the recursive descent decision
 - [ADR-0053](https://github.com/mvl-lang/mvl/blob/main/.openspec/adr/0053-no-trait-bounds.md) — why `where` is refinements-only, never trait bounds
-- [tree-sitter grammar](https://github.com/mvl-lang/mvl-spec/blob/main/tools/tree-sitter/grammar.js) — hand-translated for editor tooling
+- [tree-sitter grammar](https://github.com/mvl-lang/tree-sitter-mvl) — its own repository since spec 0.1.3; keyword tables generated from this EBNF
