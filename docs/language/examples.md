@@ -8,7 +8,7 @@ These examples are drawn from the MVL corpus and test suite. Each demonstrates a
 
 Requirements 1 and 3 — algebraic data types and exhaustive match.
 
-```rust
+```mvl
 type Attempts = Int where self >= 0
 
 type AuthError = enum {
@@ -41,7 +41,7 @@ The `Attempts` type is `Int where self >= 0` — a refinement enforced at constr
 
 Requirements 4 and 5 — `Option[T]` and `Result[T, E]`.
 
-```rust
+```mvl
 use std.io.{read_file, IoError}
 use std.ifc.{Tainted, trust}
 
@@ -70,7 +70,7 @@ partial fn load_config(path: String) -> Result[Int, IoError] ! FileRead {
 
 Requirement 7 — effects are declared in signatures, not hidden.
 
-```rust
+```mvl
 use std.io.{read_file, IoError}
 use std.ifc.{Tainted, trust}
 
@@ -104,7 +104,7 @@ The compiler rejects a function that calls `println` but does not declare `! Con
 
 Requirement 8 — `total` functions are proven to terminate.
 
-```rust
+```mvl
 // total: compiler proves this terminates via structural recursion
 total fn factorial(n: Int where self >= 0) -> Int {
     if n <= 1 { 1 } else { n * factorial(n - 1) }
@@ -140,7 +140,7 @@ partial fn count_down(start: Int) -> Int {
 
 Requirement 10 — value constraints proven at compile time.
 
-```rust
+```mvl
 type PositiveInt = Int where self > 0
 type Port        = Int where self > 0 && self < 65536
 
@@ -172,7 +172,7 @@ The layered solver (Layers 1–5: literal, flow-sensitive, interval, Cooper arit
 
 Requirement 11 — secret data cannot reach unauthorized sinks.
 
-```rust
+```mvl
 use std.ifc.{Tainted, Secret, trust, release}
 use std.log.{Logger, default_logger}
 
@@ -206,7 +206,7 @@ Every `relabel` call carries an audit tag. Each call appears in the assurance re
 
 Requirement 9 — no shared mutable state, no races.
 
-```rust
+```mvl
 actor RequestCounter {
     // Private mutable state — visible only inside this actor.
     total_requests: Int
@@ -245,7 +245,7 @@ The actor's fields are accessible only through its behaviors. Behaviors are asyn
 
 Requirement 6 — resources used exactly once.
 
-```rust
+```mvl
 use std.io.{open, close, write, Fd, IoError, Path}
 
 partial fn append_line(p: Path, line: String) -> Result[Unit, IoError] ! Console {
@@ -269,7 +269,7 @@ partial fn append_line(p: Path, line: String) -> Result[Unit, IoError] ! Console
 
 A small pipeline showing requirements 1, 5, 7, and 10 layered on top of each other. See [`mvl-lang/examples/crud_api`](https://github.com/mvl-lang/examples/tree/main/crud_api) for the full REST handler.
 
-```rust
+```mvl
 type CreateUserRequest = struct {
     name:  String,
     email: String,

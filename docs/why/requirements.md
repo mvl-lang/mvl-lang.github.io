@@ -28,7 +28,7 @@ MVL enforces eleven properties at compile time. If your code compiles, it satisf
 
 **Mechanism:** Algebraic data types (sum types + product types) model exactly the states that can exist. No sentinel values, no magic numbers, no invalid combinations.
 
-```rust
+```mvl
 // Sum type: exactly one of these
 enum PaymentStatus {
     Pending,
@@ -58,7 +58,7 @@ fn handle(status: PaymentStatus) -> String {
 
 **Mechanism:** Ownership and borrowing. Every value has exactly one owner. References borrow without ownership transfer. The compiler tracks lifetimes.
 
-```rust
+```mvl
 fn process(data: String) -> Unit {
     let owned: String = data;       // ownership transferred
     consume(owned);                  // ownership transferred to consume()
@@ -80,7 +80,7 @@ fn read_only(data: ref String) -> Int {
 
 **Mechanism:** `match` expressions must cover all variants. Adding a new variant to an enum causes compile errors everywhere it's matched — forcing you to handle it.
 
-```rust
+```mvl
 enum Direction { North, South, East, West }
 
 fn to_vector(d: Direction) -> (Int, Int) {
@@ -103,7 +103,7 @@ fn to_vector(d: Direction) -> (Int, Int) {
 
 **Mechanism:** No null. Optional values use `Option[T]` — either `Some(value)` or `None`. The compiler forces you to handle both cases.
 
-```rust
+```mvl
 fn find_user(id: Int) -> Option[User] {
     // returns Some(user) or None
 }
@@ -127,7 +127,7 @@ fn greet(id: Int) -> String {
 
 **Mechanism:** Fallible operations return `Result[T, E]`. Errors must be explicitly handled or propagated with `?`. No exceptions.
 
-```rust
+```mvl
 fn read_config(path: String) -> Result[Config, IoError] ! FileRead {
     let content: String = read_file(path)?;  // propagates error
     parse_config(content)
@@ -151,7 +151,7 @@ fn main() -> Unit ! FileRead + Console {
 
 **Mechanism:** Linear types ensure resources are used exactly once. File handles, connections, locks — if you open it, you must close it, exactly once.
 
-```rust
+```mvl
 fn with_file(path: String) -> Result[Unit, IoError] ! FileRead {
     let file: File = open(path)?;    // file opened
     let content: String = read(file); // file consumed (closed after read)
@@ -170,7 +170,7 @@ fn with_file(path: String) -> Result[Unit, IoError] ! FileRead {
 
 **Mechanism:** Effects declared in function signatures with `!`. A function that does console I/O must declare `! Console`. Effects propagate — callers must declare effects of callees.
 
-```rust
+```mvl
 fn pure_add(a: Int, b: Int) -> Int {
     a + b  // no effects — pure function
 }
@@ -195,7 +195,7 @@ fn main() -> Unit ! Console + FileRead {
 
 **Mechanism:** Functions marked `total` must provably terminate. The compiler verifies recursion has decreasing arguments and loops have bounded iterations.
 
-```rust
+```mvl
 total fn factorial(n: Int where n >= 0) -> Int {
     if n == 0 { 1 } else { n * factorial(n - 1) }
     // Compiler proves: n decreases each call, base case exists
@@ -220,7 +220,7 @@ total fn sum_list(xs: List[Int]) -> Int {
 
 **Mechanism:** Actor model. Mutable state lives inside actors. Communication via message passing only. No shared memory between actors.
 
-```rust
+```mvl
 actor Counter {
     state count: Int = 0
 
@@ -251,7 +251,7 @@ fn main() -> Unit ! Spawn {
 
 **Mechanism:** `where` clauses on types. The compiler proves constraints at compile time using an SMT solver.
 
-```rust
+```mvl
 fn divide(a: Int, b: Int where b != 0) -> Int {
     a / b  // division by zero impossible
 }
@@ -279,7 +279,7 @@ fn main() -> Unit ! Console {
 
 **Mechanism:** IFC labels on types. Data carries its security label. The compiler tracks information flow and prevents unauthorized release.
 
-```rust
+```mvl
 label Secret
 label Tainted
 

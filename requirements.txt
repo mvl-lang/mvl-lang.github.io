@@ -1,0 +1,9 @@
+# Docs build dependencies for mvl-lang.org.
+#
+# pygments-mvl provides the `mvl` lexer that the ```mvl fences throughout docs/
+# rely on. Without it Pygments silently falls back to plain text — the pages
+# still build, they just lose all highlighting. deploy.yml asserts the lexer
+# resolves and that the built HTML actually contains highlight spans, so that
+# degradation cannot pass unnoticed.
+mkdocs-material==9.6.21
+pygments-mvl==0.1.5

@@ -3,6 +3,10 @@ name: Deploy docs to GitHub Pages
 on:
   push:
     branches: [main]
+  # PRs build and run the highlighting guards but do not deploy — see the
+  # condition on the `deploy` job. Without this, a broken docs build merges
+  # cleanly and only fails afterwards, on main, at deploy time.
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -24,17 +28,65 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install mkdocs-material
-        run: pip install mkdocs-material
+      - name: Install docs dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify the MVL lexer is available
+        # Without pygments-mvl, Pygments falls back to plain text for ```mvl
+        # fences: the site still builds, it just loses every highlight. Fail
+        # here rather than deploying an unhighlighted site.
+        run: |
+          python -c "
+          from pygments.lexers import get_lexer_by_name
+          lx = get_lexer_by_name('mvl')
+          assert lx.name == 'MVL', lx.name
+          print(f'MVL lexer available: {lx.name}')
+          "
 
       - name: Build site
         run: mkdocs build
+
+      - name: Verify MVL blocks are actually highlighted
+        # A built page carrying an ```mvl fence must be recognised as MVL and
+        # carry Pygments token spans.
+        #
+        # mkdocs-material emits the wrapper as class="language-mvl highlight" —
+        # a combined attribute, so grepping for class="highlight" alone never
+        # matches. My first version of this guard did exactly that: it failed
+        # against a build whose highlighting was demonstrably working.
+        run: |
+          set -euo pipefail
+          page=site/language/overview/index.html
+          test -f "$page" || { echo "::error::$page not built"; exit 1; }
+
+          grep -q 'class="language-mvl highlight"' "$page" \
+            || { echo "::error::no language-mvl block in $page — fences are not lexed as MVL"; exit 1; }
+
+          # Token classes the MVL lexer emits: k=Keyword, kt=Keyword.Type.
+          for cls in k kt; do
+            grep -q "class=\"$cls\"" "$page" \
+              || { echo "::error::no <span class=\"$cls\"> in $page"; exit 1; }
+          done
+
+          # Regression guard for the defect that shipped in five artifacts:
+          # `end`, `timeout` and `audit` are contextual, not reserved. If one is
+          # highlighted as a bare keyword anywhere in the site, the lexer has
+          # regressed. See ADR-0060 (mvl-lang/mvl#2050).
+          if grep -rqE '<span class="k">(end|timeout|audit)</span>' site/; then
+            echo "::error::a contextual keyword is highlighted as reserved:"
+            grep -rhoE '<span class="k">(end|timeout|audit)</span>' site/ | sort -u
+            exit 1
+          fi
+
+          echo "MVL blocks highlighted; no contextual keyword mis-highlighted"
 
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/
 
   deploy:
+    # Only main deploys. PRs stop after `build`, having run the guards.
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
