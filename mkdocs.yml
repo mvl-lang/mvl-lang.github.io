@@ -41,6 +41,7 @@ nav:
   - Home: index.md
   - Install: install.md
   - Getting Started: getting-started.md
+  - Playground: playground.md
   - Why MVL:
     - The Principle: why/principle.md
     - The 11 Requirements: why/requirements.md
