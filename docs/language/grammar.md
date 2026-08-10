@@ -368,8 +368,26 @@ DOC_COMMENT    = "///" { ANY_CHAR } NEWLINE ;    (* doc comment — convention, 
 
 (* === Lexical === *)
 IDENT          = ALPHA { ALPHA | DIGIT | "_" } ;
-INTEGER        = DIGIT { DIGIT } ;
-FLOAT          = DIGIT { DIGIT } "." DIGIT { DIGIT } ;
+
+(* Digit-group separator `_` (mvl-lang/mvl-spec#38): permitted between digits
+   in every numeric literal form below, ignored in the literal's value. A
+   leading `_` is unreachable — the lexer dispatches on is_ascii_digit first
+   (or on the base-prefix branch, which itself requires at least one real
+   digit: `0x_` alone is an error, not a valid zero). A trailing `_` (e.g.
+   `1_`) is NOT rejected by the current implementation — this is a known gap,
+   not a deliberate design choice; see src/mvl/parser/lexer/numbers.rs. *)
+INTEGER        = DIGIT { DIGIT | "_" }
+               | "0" ( "x" | "X" ) HEX_DIGIT { HEX_DIGIT | "_" }
+               | "0" ( "b" | "B" ) BIN_DIGIT { BIN_DIGIT | "_" }
+               | "0" ( "o" | "O" ) OCT_DIGIT { OCT_DIGIT | "_" } ;
+
+(* A float either has a fractional part (exponent optional) or has no
+   fractional part but does have an exponent — `1e10` is a float with no
+   `.` at all. Digits-only with neither is INTEGER, not FLOAT. *)
+FLOAT          = DIGIT { DIGIT | "_" } "." DIGIT { DIGIT | "_" } [ EXPONENT ]
+               | DIGIT { DIGIT | "_" } EXPONENT ;
+EXPONENT       = ( "e" | "E" ) [ "+" | "-" ] DIGIT { DIGIT | "_" } ;
+
 STRING         = '"' { CHAR_ELEM } '"'              (* single-line with escape sequences *)
                | '"""' { CHAR_ELEM | NEWLINE } '"""' (* multiline — literal newlines preserved *)
                | 'r"' { ANY_CHAR_EXCEPT_DQUOTE } '"' (* raw — no escape processing *)
@@ -377,6 +395,9 @@ STRING         = '"' { CHAR_ELEM } '"'              (* single-line with escape s
 CHAR           = "'" CHAR_ELEM "'" ;
 ALPHA          = "a"..."z" | "A"..."Z" | "_" ;
 DIGIT          = "0"..."9" ;
+HEX_DIGIT      = DIGIT | "a"..."f" | "A"..."F" ;
+BIN_DIGIT      = "0" | "1" ;
+OCT_DIGIT      = "0"..."7" ;
 ```
 
 ---
