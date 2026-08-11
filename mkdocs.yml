@@ -44,7 +44,7 @@ nav:
   - Playground: playground.md
   - Why MVL:
     - The Principle: why/principle.md
-    - The 11 Requirements: why/requirements.md
+    - The 11 Properties: why/properties.md
     - Testing Suite: why/testing.md
     - Build Assurance: why/build-assurance.md
     - Runtime Observability: why/runtime.md

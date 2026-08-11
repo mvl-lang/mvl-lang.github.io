@@ -208,7 +208,7 @@ partial fn main() -> Unit ! Log {
 }
 ```
 
-### Requirements Demonstrated
+### Properties Demonstrated
 
 | Req | Name | How It's Shown |
 |-----|------|----------------|
@@ -248,6 +248,6 @@ error[E0011]: information flow violation
 
 ## Next Steps
 
-- [The 11 Requirements](language/requirements.md) — what the compiler proves
+- [The 11 Properties](language/properties.md) — what the compiler proves
 - [Design Principles](language/principles.md) — why MVL is built this way
 - [Examples](language/examples.md) — real programs with verification

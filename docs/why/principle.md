@@ -74,7 +74,7 @@ MVL implements the LLM-maximizing principle through four integrated pillars:
 
     The 11 requirements: type safety, memory safety, null elimination, effect tracking, ownership, termination, data race freedom, refinement types, information flow control, exhaustive matching, error visibility.
 
-    [:octicons-arrow-right-24: The 11 Requirements](requirements.md)
+    [:octicons-arrow-right-24: The 11 Properties](properties.md)
 
 -   :material-test-tube:{ .lg .middle } **Testing Suite**
 

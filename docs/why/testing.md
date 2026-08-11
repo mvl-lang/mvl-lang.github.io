@@ -310,7 +310,7 @@ Assurance Report
 ================
 Spec: 004-authentication
 
-  Requirement 1: User login [MUST]
+  Property 1: User login [MUST]
     Implementation: src/auth.mvl::login
     Tests:
       - auth_test.mvl::test_login_success
@@ -318,7 +318,7 @@ Spec: 004-authentication
       - auth_test.mvl::scenario_user_login
     Coverage: 3 tests, 94% line coverage
 
-  Requirement 2: Session expiry [MUST]
+  Property 2: Session expiry [MUST]
     Implementation: src/auth.mvl::check_session
     Tests:
       - auth_test.mvl::test_session_valid

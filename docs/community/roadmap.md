@@ -62,7 +62,7 @@ Every package's public API satisfies all eleven requirements. Packages may use `
 
 ---
 
-## ✅ 5 — Assurance and the 11 Requirements
+## ✅ 5 — Assurance and the 11 Properties
 
 The full eleven-requirement verification pipeline is in place and tested. The `mvl assurance` command produces a machine-readable proof record for every source file: which requirements are proven, which refinements were discharged at which solver layer, and a complete IFC audit trail of every label transition.
 
@@ -74,7 +74,7 @@ This is the compliance artefact for safety-critical certification (DO-178C, IEC 
 
 ## ✅ 6 — Erlang-Inspired Actors + Tokio
 
-An actor model for safe concurrency, inspired by Erlang's process model and backed by Tokio. Mutable state lives inside actor fields and is only accessible via message sends — no shared memory, no data races (Requirement 9).
+An actor model for safe concurrency, inspired by Erlang's process model and backed by Tokio. Mutable state lives inside actor fields and is only accessible via message sends — no shared memory, no data races (Property 9).
 
 Actor behaviors (`pub fn`) are async. The compiler enforces sendability: parameters must be value types, `val`-borrowed, or `iso`-isolated. The supervision model (`std.actors`) supports bidirectional links and one-way monitors for fault-tolerant trees.
 
@@ -124,7 +124,7 @@ An extended actor model addressing the limitations of the current design. Key op
 - **Back-pressure** — bounded mailboxes with `! Block` or `! Drop` overflow policies, declared in the actor signature
 - **Hot code upgrade** — actor state migration between versions without restart
 
-The foundation (Requirement 9, `std.actors`, Tokio runtime) is already in place. Actor 2.0 builds the protocol-level and distributed-systems layer on top.
+The foundation (Property 9, `std.actors`, Tokio runtime) is already in place. Actor 2.0 builds the protocol-level and distributed-systems layer on top.
 
 ---
 

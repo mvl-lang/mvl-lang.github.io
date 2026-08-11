@@ -112,41 +112,41 @@ Runtime proofs are valid — the constraint is checked at runtime. Failed proofs
 
 ---
 
-## Requirements in Detail
+## Properties in Detail
 
 ### What Each Verdict Means
 
-**Requirement 1 — Type Safety**
+**Property 1 — Type Safety**
 The checker verifies that every expression has a compatible type, every enum arm matches the variant, and every struct field is initialised with the correct type. A violation here means the code uses a type in a way it was not declared to support.
 
-**Requirement 2 — Memory Safety**
+**Property 2 — Memory Safety**
 The ownership checker verifies no value is used after being moved, no resource is freed twice, and every reference is backed by a live owner. Violations show the location where ownership was lost.
 
-**Requirement 3 — Exhaustive Matching**
+**Property 3 — Exhaustive Matching**
 Every `match` expression covers all possible variants of the matched type. Adding a new enum variant causes compile errors at every match that does not handle it.
 
-**Requirement 4 — Null Elimination**
+**Property 4 — Null Elimination**
 There is no null in MVL. Every optional value is `Option[T]`. A `None` case that is not handled in a `match` is a compile error.
 
-**Requirement 5 — Error Visibility**
+**Property 5 — Error Visibility**
 Every function that can fail returns `Result[T, E]`. A `Result` that is not handled (not matched, not propagated with `?`) is a compile error.
 
-**Requirement 6 — Ownership**
+**Property 6 — Ownership**
 Every linear type (file handle, database connection, actor reference) is consumed exactly once. A value used after it was moved, or a resource that leaves scope without being closed, is a compile error.
 
-**Requirement 7 — Effect Tracking**
+**Property 7 — Effect Tracking**
 A function that calls `println` must declare `! Console`. A function that reads a file must declare `! FileRead`. Undeclared effects are compile errors. Effects propagate upward through call chains automatically.
 
-**Requirement 8 — Termination**
+**Property 8 — Termination**
 Functions marked `total` are proven to terminate. For recursive functions, the compiler verifies structural decreasing. For loops, a `decreases` clause provides the variant. A function that cannot be proven to terminate must be marked `partial`.
 
-**Requirement 9 — Data Race Freedom**
+**Property 9 — Data Race Freedom**
 All mutable state lives inside actor fields. State is only accessible via message sends — never via direct field access from outside the actor. The compiler verifies that `pub fn` parameters are sendable (value types, `val`, or `iso` capabilities).
 
-**Requirement 10 — Refinement Types**
+**Property 10 — Refinement Types**
 `where` predicates on types and parameters are verified by the layered solver at call sites and return points. The `mvl prove` command shows which layer discharged each proof and which fell back to runtime.
 
-**Requirement 11 — Information Flow Control**
+**Property 11 — Information Flow Control**
 `Tainted[T]` values from external input cannot reach database queries, network calls, or logs without an explicit `relabel` expression. `Secret[T]` values cannot flow to any output effect without declassification. Every `relabel` site carries an audit tag recorded in the report.
 
 ---
@@ -263,5 +263,5 @@ This chain is the compliance artefact for DO-178C, IEC 61508, ISO 26262, SOC 2, 
 ## See Also
 
 - [Build Assurance](../why/build-assurance.md) — supply chain, SBOM, package manifest
-- [The 11 Requirements](../why/requirements.md) — detailed explanation of each requirement
+- [The 11 Properties](../why/properties.md) — detailed explanation of each requirement
 - [Language Reference](reference.md) — refinement types and the solver

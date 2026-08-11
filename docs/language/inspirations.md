@@ -26,7 +26,7 @@ Intuitionistic type theory made refinement types and dependent types mathematica
 
 ### Linear logic (Girard, 1987)
 
-Every resource used exactly once. This is the theoretical parent of Rust's borrow checker and MVL's ownership discipline (Requirement 6). Without linear logic, there is no principled reason to reject double-free or use-after-move.
+Every resource used exactly once. This is the theoretical parent of Rust's borrow checker and MVL's ownership discipline (Property 6). Without linear logic, there is no principled reason to reject double-free or use-after-move.
 
 ### Design by Contract — Eiffel (Meyer, 1988)
 
@@ -51,7 +51,7 @@ Cargo also shaped `mvl install`, `mvl.toml`, and the lock-file model. The SBOM t
 
 ## Erlang / OTP — actors and supervision
 
-MVL's actor model comes almost verbatim from Erlang: one actor per behavior, no shared state, message passing over typed mailboxes, supervision trees for fault tolerance. `std.actors` mirrors OTP's `supervisor` and `gen_server` patterns. The philosophy "let it crash and restart" is Erlang's; the safety net (Requirement 9 — data race freedom, checked at compile time) is MVL's addition.
+MVL's actor model comes almost verbatim from Erlang: one actor per behavior, no shared state, message passing over typed mailboxes, supervision trees for fault tolerance. `std.actors` mirrors OTP's `supervisor` and `gen_server` patterns. The philosophy "let it crash and restart" is Erlang's; the safety net (Property 9 — data race freedom, checked at compile time) is MVL's addition.
 
 Where Erlang uses dynamic types and lets protocol errors surface at runtime, MVL types mailboxes statically. A message that doesn't match the actor's protocol is a compile error, not a runtime pattern-match failure. Session types (spec 016) extend this to multi-message protocol verification — the direction Erlang never took because dynamic typing was the whole point.
 
@@ -63,7 +63,7 @@ Erlang's SASL and `logger` also shaped `std.audit`: structured events, actor ide
 
 Ada gave MVL the culture of **one construct per concept** (Principle 2). SPARK gave MVL the culture of **certification artifacts** — the idea that a compiler's job includes producing evidence, not just object code. `mvl assurance` outputs a machine-readable proof record because DO-178C and IEC 61508 demand it, and Ada/SPARK proved this is achievable in production avionics for 30+ years.
 
-Ada also contributed the pattern `type Positive is Integer range 1..MAX` — the direct ancestor of MVL's refinement types (`Int where x > 0`, Requirement 10). SPARK 2014 removed Ada's dynamic dispatch and closed the last verification holes; MVL does the same by construction.
+Ada also contributed the pattern `type Positive is Integer range 1..MAX` — the direct ancestor of MVL's refinement types (`Int where x > 0`, Property 10). SPARK 2014 removed Ada's dynamic dispatch and closed the last verification holes; MVL does the same by construction.
 
 MISRA C (a C subset for automotive safety) contributed the philosophy of **language contraction**: fewer features means fewer places for bugs to hide. ADR-0002 is MISRA C's philosophy applied to a whole language rather than a coding standard.
 
@@ -71,7 +71,7 @@ MISRA C (a C subset for automotive safety) contributed the philosophy of **langu
 
 ## The ML family — OCaml, Haskell, Standard ML
 
-Algebraic data types, exhaustive pattern matching, `Some`/`None`, and the discipline of immutability by default all come from ML. Rust inherited them; MVL inherited them through Rust with the same shape. Requirement 1 (type safety through ADTs) and Requirement 3 (totality via exhaustive match) are the ML contribution.
+Algebraic data types, exhaustive pattern matching, `Some`/`None`, and the discipline of immutability by default all come from ML. Rust inherited them; MVL inherited them through Rust with the same shape. Property 1 (type safety through ADTs) and Property 3 (totality via exhaustive match) are the ML contribution.
 
 MVL deliberately does *not* inherit ML's type inference on `let` bindings. Every binding requires an explicit type annotation. The LLM writes the annotation; the compiler no longer has to guess. This turns type errors into local, actionable failures instead of remote propagations.
 
@@ -83,7 +83,7 @@ Haskell also contributed the culture of "if it compiles, it works" — MVL sharp
 
 `! Console`, `! Net`, `! DB + Audit` — MVL's effect annotations come from Koka (Leijen, 2014). Koka showed that row-polymorphic effects can be tracked in signatures without breaking type inference. MVL adopts the surface syntax; the underlying algebra is deliberately simplified (no effect polymorphism, no handlers as first-class values) because the LLM doesn't need the flexibility and the compiler is faster without it.
 
-Requirement 7 (effect tracking) is Koka's contribution. Every side effect visible in the signature; no ambient effects, no hidden I/O.
+Property 7 (effect tracking) is Koka's contribution. Every side effect visible in the signature; no ambient effects, no hidden I/O.
 
 ---
 
@@ -98,7 +98,7 @@ MVL takes:
 - **Idris's totality-by-default:** every function is total unless declared `partial`
 - **F*'s discipline:** effects, refinements, and contracts all in the signature
 
-Requirement 10 (refinement types) and Requirement 8 (termination) are this family's contribution. What MVL adds is the LLM authorship model: the annotations are cheap to produce, so the practicality objection dissolves.
+Property 10 (refinement types) and Property 8 (termination) are this family's contribution. What MVL adds is the LLM authorship model: the annotations are cheap to produce, so the practicality objection dissolves.
 
 ---
 
@@ -106,13 +106,13 @@ Requirement 10 (refinement types) and Requirement 8 (termination) are this famil
 
 Denning's lattice model of secure information flow (1976) sat unused for decades outside academic experiments because labeling every variable is intolerable for human developers. Jif (Java + information flow) and FlowCaml (OCaml + information flow) demonstrated the discipline works; nobody adopted it.
 
-MVL adopts it as Requirement 11. `Secret[T]`, `Tainted[T]`, and user-defined labels form a lattice; the compiler tracks label flow through every expression; `declassify` and `sanitize` are the only ways to lower a label, and they are audited. This is Denning's model, LLM-annotated at zero human cost, compile-time-enforced.
+MVL adopts it as Property 11. `Secret[T]`, `Tainted[T]`, and user-defined labels form a lattice; the compiler tracks label flow through every expression; `declassify` and `sanitize` are the only ways to lower a label, and they are audited. This is Denning's model, LLM-annotated at zero human cost, compile-time-enforced.
 
 ---
 
 ## Elm — no exceptions, no nulls
 
-Elm proved that a mainstream frontend language can ship with `Result`-only error handling and `Maybe`-only optional values, without a single runtime exception in production. Elm's "friendly compiler" ethos also shaped MVL's diagnostic style — every error message is expected to point at the source line, name the requirement violated, and propose a fix. Requirement 4 (null elimination) and Requirement 5 (error visibility) descend from ML but were popularized by Elm.
+Elm proved that a mainstream frontend language can ship with `Result`-only error handling and `Maybe`-only optional values, without a single runtime exception in production. Elm's "friendly compiler" ethos also shaped MVL's diagnostic style — every error message is expected to point at the source line, name the requirement violated, and propose a fix. Property 4 (null elimination) and Property 5 (error visibility) descend from ML but were popularized by Elm.
 
 ---
 
@@ -146,7 +146,7 @@ MVL adopts a **contracted** version — three capabilities where Pony has six:
 
 `box`, `tag`, and `trn` are dropped because the additional annotation surface is not worth the flexibility once dynamic dispatch and inheritance are also gone. What remains is the essential property Pony pioneered: **compile-time data race freedom without a garbage collector and without a borrow checker.**
 
-Requirement 9 (data race freedom) is Pony's contribution, combined with Erlang's actor model. MVL does not have Rust's ownership *system* — it has Rust's ownership *syntax* on top of Pony's capability *semantics*. This is not a distinction most language designers would make; MVL makes it deliberately because the LLM authors the annotations and the compiler needs the discipline that produces the tightest verification per annotation token.
+Property 9 (data race freedom) is Pony's contribution, combined with Erlang's actor model. MVL does not have Rust's ownership *system* — it has Rust's ownership *syntax* on top of Pony's capability *semantics*. This is not a distinction most language designers would make; MVL makes it deliberately because the LLM authors the annotations and the compiler needs the discipline that produces the tightest verification per annotation token.
 
 ---
 
@@ -194,7 +194,7 @@ Every language above contributed something. MVL also deliberately rejected featu
 | Traits with dynamic dispatch | Rust, Java, Go | Non-static call targets defeat effect and termination analysis |
 | Type inference on bindings | ML, Haskell | Errors propagate; explicit annotations localize failures |
 | Exceptions | Java, C#, C++, Python | Hidden control flow (violates Principle 1) |
-| Null | C, Java, Go, Python | Requirement 4 rejects it |
+| Null | C, Java, Go, Python | Property 4 rejects it |
 | Operator overloading | C++, Scala, Rust | Surprise semantics — one meaning per operator |
 | Inheritance | Java, C++, Python | Implicit method resolution order; composition suffices |
 | Global mutable state | C, Java, Python | Every mutation must have an owner (Req 9) |
@@ -217,5 +217,5 @@ MVL is **Rust's syntax and error discipline** + **Pony's reference capabilities*
 ## See Also
 
 - [Design Principles](principles.md) — the meta-principles and structural decisions that these inspirations produced
-- [The 11 Requirements](../why/requirements.md) — the specific properties each inspiration contributed
+- [The 11 Properties](../why/properties.md) — the specific properties each inspiration contributed
 - [References (repo)](https://github.com/mvl-lang/mvl/blob/main/docs/references.md) — full bibliography with BibTeX

@@ -214,4 +214,4 @@ make test-bootstrap   # lex+parse corpus through the self-hosted frontend
 
 - [Install MVL](../install.md) — pre-built binaries and quick install
 - [Build Assurance](../why/build-assurance.md) — what the assurance report contains
-- [The 11 Requirements](../why/requirements.md) — what the compiler proves about itself
+- [The 11 Properties](../why/properties.md) — what the compiler proves about itself

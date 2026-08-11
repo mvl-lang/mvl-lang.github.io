@@ -94,6 +94,6 @@ It matters which repository, because they are different codebases:
 
 - [Getting Started](getting-started.md) — the same first program, on your own machine
 - [Install](install.md) — get the compiler locally
-- [The 11 Requirements](why/requirements.md) — what MVL is actually trying to guarantee
+- [The 11 Properties](why/properties.md) — what MVL is actually trying to guarantee
 - [Language Reference](docs/reference.md) — the full surface
 - :simple-discord: [Discord](https://discord.gg/BuWfh7A2A) — ask questions, show what you built

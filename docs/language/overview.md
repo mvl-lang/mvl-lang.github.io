@@ -6,11 +6,11 @@ The compiler is not a suggestion engine. Every program that passes `mvl check` c
 
 ---
 
-## The Eleven Requirements
+## The Eleven Properties
 
 Every MVL program is verified against eleven requirements at compile time.
 
-| # | Requirement | What the compiler prevents |
+| # | Property | What the compiler prevents |
 |---|-------------|---------------------------|
 | **1** | **Type safety** | Invalid states, type confusion, stringly-typed APIs |
 | **2** | **Memory safety** | Use-after-free, double-free, buffer overflows |
@@ -24,7 +24,7 @@ Every MVL program is verified against eleven requirements at compile time.
 | **10** | **Refinement types** | Out-of-range values, precondition violations |
 | **11** | **Information flow control** | Secret data leaking to logs, tainted input reaching the database |
 
-Requirements 1–6 are established (the Rust lineage). Requirements 7–11 were previously too annotation-heavy to be practical. MVL makes them economical: the language surface is small, annotations are explicit, and the LLM carries the annotation burden.
+Properties 1–6 are established (the Rust lineage). Properties 7–11 were previously too annotation-heavy to be practical. MVL makes them economical: the language surface is small, annotations are explicit, and the LLM carries the annotation burden.
 
 ---
 

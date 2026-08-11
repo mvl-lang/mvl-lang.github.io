@@ -165,7 +165,7 @@ fn main() -> Unit ! Console {
 }
 ```
 
-Eight tokens of user code. The compiler verifies Requirement 7 (effect tracking) — `println` requires `! Console` in the signature, and the compiler confirms it is declared.
+Eight tokens of user code. The compiler verifies Property 7 (effect tracking) — `println` requires `! Console` in the signature, and the compiler confirms it is declared.
 
 ---
 

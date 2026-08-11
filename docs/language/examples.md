@@ -6,7 +6,7 @@ These examples are drawn from the MVL corpus and test suite. Each demonstrates a
 
 ## Type safety and exhaustive matching
 
-Requirements 1 and 3 — algebraic data types and exhaustive match.
+Properties 1 and 3 — algebraic data types and exhaustive match.
 
 ```mvl
 type Attempts = Int where self >= 0
@@ -39,7 +39,7 @@ The `Attempts` type is `Int where self >= 0` — a refinement enforced at constr
 
 ## Null elimination and error visibility
 
-Requirements 4 and 5 — `Option[T]` and `Result[T, E]`.
+Properties 4 and 5 — `Option[T]` and `Result[T, E]`.
 
 ```mvl
 use std.io.{read_file, IoError}
@@ -68,7 +68,7 @@ partial fn load_config(path: String) -> Result[Int, IoError] ! FileRead {
 
 ## Effect tracking
 
-Requirement 7 — effects are declared in signatures, not hidden.
+Property 7 — effects are declared in signatures, not hidden.
 
 ```mvl
 use std.io.{read_file, IoError}
@@ -102,7 +102,7 @@ The compiler rejects a function that calls `println` but does not declare `! Con
 
 ## Termination checking
 
-Requirement 8 — `total` functions are proven to terminate.
+Property 8 — `total` functions are proven to terminate.
 
 ```mvl
 // total: compiler proves this terminates via structural recursion
@@ -138,7 +138,7 @@ partial fn count_down(start: Int) -> Int {
 
 ## Refinement types
 
-Requirement 10 — value constraints proven at compile time.
+Property 10 — value constraints proven at compile time.
 
 ```mvl
 type PositiveInt = Int where self > 0
@@ -170,7 +170,7 @@ The layered solver (Layers 1–5: literal, flow-sensitive, interval, Cooper arit
 
 ## Information flow control
 
-Requirement 11 — secret data cannot reach unauthorized sinks.
+Property 11 — secret data cannot reach unauthorized sinks.
 
 ```mvl
 use std.ifc.{Tainted, Secret, trust, release}
@@ -204,7 +204,7 @@ Every `relabel` call carries an audit tag. Each call appears in the assurance re
 
 ## Data race freedom via actors
 
-Requirement 9 — no shared mutable state, no races.
+Property 9 — no shared mutable state, no races.
 
 ```mvl
 actor RequestCounter {
@@ -237,13 +237,13 @@ fn main() -> Unit ! Console + Actor {
 }
 ```
 
-The actor's fields are accessible only through its behaviors. Behaviors are async and return `Unit` — you send a message, the actor processes it later. Concurrent senders cannot race because the mailbox serialises delivery. Requirement 9 is structural, not disciplinary.
+The actor's fields are accessible only through its behaviors. Behaviors are async and return `Unit` — you send a message, the actor processes it later. Concurrent senders cannot race because the mailbox serialises delivery. Property 9 is structural, not disciplinary.
 
 ---
 
 ## Ownership and resource safety
 
-Requirement 6 — resources used exactly once.
+Property 6 — resources used exactly once.
 
 ```mvl
 use std.io.{open, close, write, Fd, IoError, Path}
@@ -305,7 +305,7 @@ pub fn create_user(name: String, email: String) -> Result[Int, CreateError] ! Co
 }
 ```
 
-The compiler verifies: all error paths handled (Requirement 5), effects declared (`! Console`, Requirement 7), no null (Requirement 4), and every enum variant matched (Requirement 3).
+The compiler verifies: all error paths handled (Property 5), effects declared (`! Console`, Property 7), no null (Property 4), and every enum variant matched (Property 3).
 
 ---
 

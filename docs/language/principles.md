@@ -190,6 +190,6 @@ If you find yourself proposing a new "principle" that is really one of these, ca
 
 ## See Also
 
-- [The 11 Requirements](../why/requirements.md) — detailed explanation of each requirement
+- [The 11 Properties](../why/properties.md) — detailed explanation of each requirement
 - [Language Overview](overview.md) — syntax and structure
 - [ADR index](https://github.com/mvl-lang/mvl/tree/main/.openspec/adr) — all architectural decisions
