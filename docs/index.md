@@ -10,9 +10,15 @@ hide:
 
 # MVL — Maximum Verifiable Language
 
-> *If your AI writes code without hesitation and your compiler guards the gate — why prove anything less than everything?*
+> *Your AI writes code faster than you can review it. The compiler should prove all of it.*
 
-**MVL is a programming language where the compiler verifies 11 properties at compile time.** No null pointers. No buffer overflows. No data races. No unhandled errors. No secret leaks. If it compiles, it's correct.
+The economics of verification have flipped.
+
+For decades, formal methods lost to shipping speed. Annotations cost time. Developers minimized them. Teams shipped bugs because proving correctness cost more than fixing crashes.
+
+LLMs changed the equation. An AI writes annotations as easily as any other line of code. Effect declarations, refinement predicates, ownership markers, information flow labels — the verbosity that made verification impractical is now free.
+
+**MVL is built for this moment.** The compiler proves 11 properties before your code runs: no null pointers, no buffer overflows, no data races, no unhandled errors, no secret leaks. The LLM writes. The compiler proves. You ship with mathematical certainty.
 
 ---
 
