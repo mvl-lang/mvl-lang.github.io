@@ -1,28 +1,30 @@
-# The 11 Requirements
+# The 11 Compile-Time Properties
 
-MVL enforces eleven properties at compile time. If your code compiles, it satisfies all eleven. No runtime checks needed for these categories — they are *structurally impossible* to violate.
+**MVL proves these properties before your code runs. If it compiles, all eleven hold. No runtime checks, no trust boundaries, no "should never happen" paths — the violations are structurally impossible.**
 
 ---
 
 ## Overview
 
-| # | Requirement | What it prevents | Key mechanism |
-|---|-------------|------------------|---------------|
-| 1 | Type safety | Impossible states | Algebraic data types |
-| 2 | Memory safety | Use-after-free, buffer overflow | Ownership + borrowing |
-| 3 | Exhaustive matching | Unhandled cases | Match completeness |
-| 4 | Null elimination | Null pointer dereference | `Option[T]` only |
-| 5 | Error visibility | Silent error swallowing | `Result[T, E]` required |
-| 6 | Ownership | Double-free, resource leaks | Linear types |
-| 7 | Effect tracking | Hidden side effects | Effect signatures |
-| 8 | Termination | Infinite loops | `total` functions |
-| 9 | Data race freedom | Concurrent access bugs | Actor isolation |
-| 10 | Refinement types | Out-of-range values | `where` clauses |
-| 11 | Information flow | Secret/tainted data leaks | IFC labels |
+| # | Property | Mechanism | Prevents |
+|---|----------|-----------|----------|
+| 1 | Type safety | Algebraic data types | Impossible states, type confusion |
+| 2 | Memory safety | Ownership + borrowing | Use-after-free, buffer overflow |
+| 3 | Exhaustive matching | Match completeness | Unhandled cases |
+| 4 | Null elimination | `Option[T]` | Null pointer dereference |
+| 5 | Error visibility | `Result[T, E]` | Silent failures |
+| 6 | Ownership | Linear types | Resource leaks, double-free |
+| 7 | Effect tracking | `! Effect` signatures | Hidden side effects |
+| 8 | Termination | `total` / `partial` | Infinite loops |
+| 9 | Data race freedom | Actor isolation | Concurrent access bugs |
+| 10 | Refinement types | `where` clauses + SMT | Out-of-range values |
+| 11 | Information flow | IFC labels | Secret/tainted data leaks |
 
 ---
 
-## Requirement 1: Type Safety (ADTs)
+## Property 1: Type Safety (Algebraic Data Types)
+
+The compiler enforces that values match their declared types through sum types (enums) and product types (structs). Algebraic data types model exactly the states that can exist — no sentinel values, no magic numbers, no invalid field combinations. Type confusion, stringly-typed data, and "impossible state" bugs are rejected at compile time.
 
 **What it prevents:** Invalid state representations, type confusion, stringly-typed code.
 
@@ -52,7 +54,9 @@ fn handle(status: PaymentStatus) -> String {
 
 ---
 
-## Requirement 2: Memory Safety
+## Property 2: Memory Safety (Ownership + Borrowing)
+
+Every value has exactly one owner; ownership transfers explicitly, and references borrow without taking ownership. The compiler tracks these relationships statically, rejecting use-after-free, double-free, buffer overflows, and dangling pointer access. This replaces garbage collection, manual memory management, and reference counting — with zero runtime overhead.
 
 **What it prevents:** Use-after-free, double-free, buffer overflows, dangling pointers.
 
@@ -74,7 +78,9 @@ fn read_only(data: ref String) -> Int {
 
 ---
 
-## Requirement 3: Exhaustive Matching
+## Property 3: Exhaustive Matching
+
+Pattern matches must cover every variant of an enum or sum type. Adding a new variant causes compile errors at every match site, forcing explicit handling before the code compiles. Default cases that silently swallow unexpected values are forbidden — the compiler demands you name what you handle.
 
 **What it prevents:** Unhandled cases, forgotten enum variants, incomplete switch statements.
 
@@ -97,7 +103,9 @@ fn to_vector(d: Direction) -> (Int, Int) {
 
 ---
 
-## Requirement 4: Null Elimination
+## Property 4: Null Elimination
+
+There is no null pointer in MVL; optional values use `Option[T]`, which is either `Some(value)` or `None`. The compiler forces both cases to be handled — you cannot dereference without first proving the value exists. This eliminates null pointer exceptions entirely, pushing optionality into the type system where it is visible and checked.
 
 **What it prevents:** Null pointer dereference — the "billion dollar mistake."
 
@@ -121,7 +129,9 @@ fn greet(id: Int) -> String {
 
 ---
 
-## Requirement 5: Error Visibility
+## Property 5: Error Visibility
+
+Fallible operations return `Result[T, E]`, making error paths explicit in the function signature. Callers must handle or propagate errors with `?` — silent swallowing is a compile error. There are no exceptions; every failure mode is visible in the type, and ignored errors do not compile.
 
 **What it prevents:** Silent error swallowing, ignored return codes, exceptions that propagate invisibly.
 
@@ -145,7 +155,9 @@ fn main() -> Unit ! FileRead + Console {
 
 ---
 
-## Requirement 6: Ownership (Linearity)
+## Property 6: Ownership (Linear Types)
+
+Resources like file handles, connections, and locks are linear: they must be used exactly once. The compiler tracks consumption — opening a file and never closing it, or closing it twice, both fail to compile. This guarantees resource cleanup without try-with-resources, defer, or destructors that might not run.
 
 **What it prevents:** Double-free, resource leaks, use-after-close.
 
@@ -164,7 +176,9 @@ fn with_file(path: String) -> Result[Unit, IoError] ! FileRead {
 
 ---
 
-## Requirement 7: Effect Tracking
+## Property 7: Effect Tracking
+
+Side effects are declared in function signatures using `! Effect` syntax (e.g., `! Console`, `! FileRead`). A function that performs I/O must declare it; callers must declare effects of their callees. Pure functions have no effect annotation — the absence of `!` is a compiler-enforced purity guarantee.
 
 **What it prevents:** Hidden side effects, impure functions pretending to be pure, untraceable I/O.
 
@@ -189,7 +203,9 @@ fn main() -> Unit ! Console + FileRead {
 
 ---
 
-## Requirement 8: Termination
+## Property 8: Termination
+
+Functions marked `total` must provably terminate; the compiler verifies that recursive calls have decreasing arguments and loops have bounded iterations. Functions that might not terminate are marked `partial` — the distinction is enforced, not documentary. Critical code paths can require totality, ensuring no infinite loops reach production.
 
 **What it prevents:** Infinite loops, non-terminating recursion in critical paths.
 
@@ -214,7 +230,9 @@ total fn sum_list(xs: List[Int]) -> Int {
 
 ---
 
-## Requirement 9: Data Race Freedom
+## Property 9: Data Race Freedom (Actor Isolation)
+
+Mutable state exists only inside actors; communication between actors is by message passing, never shared memory. The compiler rejects direct access to another actor's state — there is no syntax for it. Race conditions, data corruption from concurrent writes, and heisenbugs are structurally impossible.
 
 **What it prevents:** Concurrent access to shared mutable state, race conditions, heisenbugs.
 
@@ -245,7 +263,9 @@ fn main() -> Unit ! Spawn {
 
 ---
 
-## Requirement 10: Refinement Types
+## Property 10: Refinement Types
+
+Types carry predicates via `where` clauses: `Int where self > 0`, `String where self.len() <= 255`. The compiler discharges these constraints using an SMT solver, proving at compile time that values satisfy their predicates. Division by zero, out-of-bounds access, and precondition violations are caught before the code runs.
 
 **What it prevents:** Out-of-range values, invalid arguments, violated preconditions.
 
@@ -273,7 +293,9 @@ fn main() -> Unit ! Console {
 
 ---
 
-## Requirement 11: Information Flow Control
+## Property 11: Information Flow Control
+
+Data carries security labels (`Secret[T]`, `Tainted[T]`) that the compiler tracks through all operations. Secret data cannot flow to public channels (logs, APIs, analytics) without explicit `relabel declassify`, which requires an audit tag. Every trust boundary crossing is statically checked and recorded — taint tracking and secret hygiene are types, not policies.
 
 **What it prevents:** Secret data leaking to logs, tainted input reaching SQL queries, PII exposed to analytics.
 
@@ -305,13 +327,13 @@ fn query(input: Tainted[String]) -> String ! Database {
 
 ## The Compound Effect
 
-Each requirement is valuable alone. Together, they compound:
+Each property is valuable alone. Together, they compound:
 
 - **Type safety + exhaustive matching** = impossible states don't compile
 - **Null elimination + error visibility** = every failure path is explicit
 - **Ownership + effect tracking** = resource management is provable
 - **Refinement + IFC** = security properties are types, not policies
 
-The eleven requirements are not a checklist. They are an integrated system where each property reinforces the others.
+The eleven properties are not a checklist. They are an integrated system where each property reinforces the others.
 
 **Code that compiles is well-formed.** Tests verify it does the right thing — not that it handles nulls, not that it avoids races, not that it tracks secrets. Those are already proven.
