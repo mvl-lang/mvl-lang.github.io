@@ -20,9 +20,9 @@ The Rust parser, the [tree-sitter grammar](https://github.com/mvl-lang/tree-sitt
 
 ```ebnf
 (* ======================================================================== *)
-(* DO NOT EDIT. This block is embedded verbatim from mvl-spec                *)
-(* grammar/grammar.ebnf by tools/gen_grammar_page.py. Edit the grammar in    *)
-(* the mvl-spec repo, then run that script. deploy.yml fails on drift.       *)
+(* DO NOT EDIT. Embedded verbatim from mvl-spec grammar/grammar.ebnf         *)
+(* Version: spec-v0.1.7                                                     *)
+(* Edit the grammar in mvl-spec, then run: python3 tools/gen_grammar_page.py *)
 (* ======================================================================== *)
 
 (* MVL — Minimum Verification Language — Formal Grammar                         *)

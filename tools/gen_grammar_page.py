@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -30,10 +31,27 @@ REPO = Path(__file__).resolve().parent.parent
 PAGE = REPO / "docs" / "language" / "grammar.md"
 FENCE = re.compile(r"(```ebnf\n)(.*?)(```)", re.S)
 
-BANNER = """(* ======================================================================== *)
-(* DO NOT EDIT. This block is embedded verbatim from mvl-spec                *)
-(* grammar/grammar.ebnf by tools/gen_grammar_page.py. Edit the grammar in    *)
-(* the mvl-spec repo, then run that script. deploy.yml fails on drift.       *)
+
+def get_spec_version(spec_dir: Path) -> str:
+    """Get the spec version from git tags or commit hash."""
+    try:
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--always"],
+            cwd=spec_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return "unknown"
+
+
+def make_banner(version: str) -> str:
+    return f"""(* ======================================================================== *)
+(* DO NOT EDIT. Embedded verbatim from mvl-spec grammar/grammar.ebnf         *)
+(* Version: {version:<63} *)
+(* Edit the grammar in mvl-spec, then run: python3 tools/gen_grammar_page.py *)
 (* ======================================================================== *)
 
 """
@@ -45,18 +63,16 @@ def main() -> int:
     ap.add_argument(
         "--spec-dir",
         type=Path,
-        default=REPO.parent / "mvl-spec",
-        help="path to an mvl-spec checkout (default: sibling of this repo)",
+        default=REPO / "vendor" / "mvl-spec",
+        help="path to an mvl-spec checkout (default: vendor/mvl-spec submodule)",
     )
     args = ap.parse_args()
 
     ebnf = args.spec_dir / "grammar" / "grammar.ebnf"
     if not ebnf.exists():
-        # Never silently succeed on a missing source — that is how a stale page
-        # would pass the drift check.
         raise SystemExit(
             f"grammar source not found: {ebnf}\n"
-            "Pass --spec-dir, or check out mvl-lang/mvl-spec as a sibling."
+            "Run: git submodule update --init"
         )
 
     old = PAGE.read_text()
@@ -64,7 +80,9 @@ def main() -> int:
     if not m:
         raise SystemExit(f"{PAGE}: no ```ebnf block found")
 
-    new = old[: m.start(2)] + BANNER + ebnf.read_text().rstrip() + "\n" + old[m.end(2) :]
+    version = get_spec_version(args.spec_dir)
+    banner = make_banner(version)
+    new = old[: m.start(2)] + banner + ebnf.read_text().rstrip() + "\n" + old[m.end(2) :]
 
     if new == old:
         print("grammar.md: up to date")
