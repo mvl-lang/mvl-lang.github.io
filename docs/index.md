@@ -5,7 +5,7 @@ hide:
 ---
 
 <div style="text-align: center; margin: 2em 0;">
-  <img src="assets/lynx_logo.png" alt="MVL Lynx" style="width: 240px; height: 180px;">
+  <img src="assets/lynx_small.png" alt="MVL Lynx" style="width: 240px; height: 180px;">
 </div>
 
 # MVL — Maximum Verifiable Language
