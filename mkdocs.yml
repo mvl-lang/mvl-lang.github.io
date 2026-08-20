@@ -33,7 +33,8 @@ theme:
   font:
     text: Inter
     code: JetBrains Mono
-  logo: assets/logo.svg
+  logo: assets/lynx_small.png
+  favicon: assets/lynx_small.png
   icon:
     repo: fontawesome/brands/github
 
