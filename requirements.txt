@@ -5,5 +5,5 @@
 # still build, they just lose all highlighting. deploy.yml asserts the lexer
 # resolves and that the built HTML actually contains highlight spans, so that
 # degradation cannot pass unnoticed.
-mkdocs-material==9.6.21
+mkdocs-material==9.7.7
 pygments-mvl==0.1.5
